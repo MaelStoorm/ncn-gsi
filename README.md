@@ -1,23 +1,33 @@
-# Jalon — NCN ⇄ GSI Dönüştürücü (Android)
+# Jalon — NCN ⇄ GSI Dönüştürücü
 
 © 2026 Egemen Çalıkoğlu. Tüm hakları saklıdır. Ayrıntılar için [LICENSE](LICENSE).
 
-Netcad NCN ve Leica GSI (GSI-8 / GSI-16) nokta dosyalarını iki yönde birleştirip dönüştüren Android uygulaması. Alt kısımda AdMob banner reklamı gösterir.
+Sahada çalışan herkes bilir: Total station'dan gelen Leica GSI dosyasını Netcad'e almak ya da Netcad'deki NCN noktalarını alete atmak her seferinde ayrı bir uğraş. Birden fazla NCN dosyasını birleştirmek de cabası. Bu işi telefondan tek ekranda halledebilmek için Jalon'u yapıyorum.
 
-- Uygulamanın kendisi `app/src/main/assets/index.html` dosyasıdır (web sürümüyle aynı sayfa).
-- `MainActivity.java` bu sayfayı açar; dosya seçme, `.GSI` / `.NCN` olarak kaydetme, panoya kopyalama ve reklamları yönetir.
-- Dosya yöneticisinden "Birlikte aç" veya "Paylaş" ile gelen dosyalar doğrudan listeye eklenir.
+**Jalon neler yapıyor?**
+
+- Netcad NCN ve Leica GSI (GSI-8 / GSI-16) dosyalarını iki yönde dönüştürüyor
+- Birden fazla nokta dosyasını tek dosyada birleştiriyor
+- Noktaları planda gösteriyor, sonucu `.GSI` / `.NCN` olarak kaydediyor ya da panoya kopyalıyor
+- Dosya yöneticisinden "Birlikte aç" veya "Paylaş" ile gelen dosyaları doğrudan listeye ekliyor
+
+Uygulama şu an geliştirme aşamasında; ilk hedefim Google Play. Ücretsiz olacak, alt kısımda küçük bir reklam alanı bulunacak.
+
+## Proje yapısı (kendime not)
+
+- Uygulamanın kendisi `app/src/main/assets/index.html` dosyası (web sürümüyle aynı sayfa).
+- `MainActivity.java` bu sayfayı açıyor; dosya seçme, kaydetme, panoya kopyalama ve reklamları yönetiyor.
 
 ## APK nasıl derlenir?
 
-Bilgisayara Android Studio kurmak gerekmez. Proje GitHub'a yüklendiğinde **GitHub Actions** her `main` gönderiminde otomatik derler:
+Android Studio kurmama gerek yok. Her `main` gönderiminde **GitHub Actions** uygulamayı kendisi derliyor:
 
 1. GitHub'da deponun **Actions** sekmesini açın, en son "Android derleme" çalışmasına tıklayın.
 2. Sayfanın altındaki **Artifacts** bölümünden **NCN-GSI-Donusturucu** dosyasını indirin. İçinde:
    - `NCN-GSI-Donusturucu.apk` → telefona kurulan uygulama
    - `NCN-GSI-Donusturucu.aab` → Play Console'a yüklenecek paket (anahtar gizli değerleri girildiyse)
 
-İsterseniz Android Studio ile de açıp `Build > Build App Bundle(s) / APK(s)` diyebilirsiniz.
+İstersem Android Studio ile de açıp `Build > Build App Bundle(s) / APK(s)` diyebilirsiniz.
 
 ## GitHub gizli değerleri (Settings › Secrets and variables › Actions)
 
@@ -30,9 +40,9 @@ Bilgisayara Android Studio kurmak gerekmez. Proje GitHub'a yüklendiğinde **Git
 | `ADMOB_APP_ID` | AdMob uygulama kimliği (`ca-app-pub-…~…`) |
 | `ADMOB_BANNER_ID` | AdMob banner reklam birimi (`ca-app-pub-…/…`) |
 
-AdMob değerleri girilmezse sürüm derlemesi de Google'ın **test** reklamlarını kullanır; bu haliyle para kazandırmaz. Anahtar girilmeden derlenen APK her zaman test reklamı gösterir: kendi reklamınıza tıklamak AdMob hesabının kapatılmasına yol açabilir.
+AdMob değerleri girilmezse sürüm derlemesi de Google'ın **test** reklamlarını kullanır; bu haliyle para kazandırmaz. Anahtar girilmeden derlenen APK her zaman test reklamı gösterir. Kendi reklamıma tıklamamalıyım, AdMob hesabı kapatılabilir.
 
-## Play Store'a yükleme kontrol listesi
+## Play Store'a yükleme kontrol listem
 
 1. **Google Play Console** geliştirici hesabı (bir kerelik 25 $). Yeni kişisel hesaplarda yayından önce 12 test kullanıcısıyla 14 günlük kapalı test zorunludur.
 2. **AdMob** hesabı açın, uygulamayı ekleyin, bir *Banner* reklam birimi oluşturun → kimlikleri GitHub'a girin.
@@ -44,7 +54,7 @@ AdMob değerleri girilmezse sürüm derlemesi de Google'ın **test** reklamları
 
 ## Paket adı
 
-`com.egemen.jalon`. Play Store'a ilk yüklemeden sonra değiştirilemez; değiştirmek isterseniz `app/build.gradle` içindeki `namespace` ve `applicationId` satırlarını ve `java/com/egemen/ncngsi` klasörünü birlikte değiştirin.
+`com.egemen.jalon`. Play Store'a ilk yüklemeden sonra değiştirilemez; değiştirmek gerekirse `app/build.gradle` içindeki `namespace` ve `applicationId` satırlarını ve `java/com/egemen/ncngsi` klasörünü birlikte değiştirin.
 
 ## Sürüm güncelleme
 
