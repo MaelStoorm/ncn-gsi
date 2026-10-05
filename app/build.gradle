@@ -1,0 +1,65 @@
+plugins {
+    id 'com.android.application'
+}
+
+// AdMob kimlikleri: release derlemede ortam değişkeninden (GitHub Secrets) okunur.
+// Tanımlı değilse Google'ın resmi TEST kimlikleri kullanılır.
+def TEST_APP_ID    = "ca-app-pub-3940256099942544~3347511713"
+def TEST_BANNER_ID = "ca-app-pub-3940256099942544/9214589741"
+def releaseAppId    = System.getenv("ADMOB_APP_ID") ?: TEST_APP_ID
+def releaseBannerId = System.getenv("ADMOB_BANNER_ID") ?: TEST_BANNER_ID
+
+// Yükleme anahtarı (upload key): GitHub Actions bu değişkenleri doldurur.
+def ksFile = System.getenv("KEYSTORE_FILE")
+
+android {
+    namespace 'com.egemen.ncngsi'
+    compileSdk 36
+
+    defaultConfig {
+        applicationId "com.egemen.ncngsi"
+        minSdk 23
+        targetSdk 36
+        versionCode Integer.parseInt(System.getenv("VERSION_CODE") ?: "1")
+        versionName "1.0.0"
+    }
+
+    signingConfigs {
+        release {
+            if (ksFile) {
+                storeFile file(ksFile)
+                storePassword System.getenv("KEYSTORE_PASSWORD")
+                keyAlias System.getenv("KEY_ALIAS")
+                keyPassword System.getenv("KEY_PASSWORD")
+            }
+        }
+    }
+
+    buildTypes {
+        debug {
+            manifestPlaceholders = [admobAppId: TEST_APP_ID]
+            resValue "string", "admob_banner_id", TEST_BANNER_ID
+            resValue "string", "app_name", "NCN GSI Dönüştürücü"
+        }
+        release {
+            minifyEnabled false
+            manifestPlaceholders = [admobAppId: releaseAppId]
+            resValue "string", "admob_banner_id", releaseBannerId
+            resValue "string", "app_name", "NCN GSI Dönüştürücü"
+            if (ksFile) {
+                signingConfig signingConfigs.release
+            }
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+}
+
+dependencies {
+    implementation 'androidx.webkit:webkit:1.12.1'
+    implementation 'com.google.android.gms:play-services-ads:24.4.0'
+    implementation 'com.google.android.ump:user-messaging-platform:3.2.0'
+}
