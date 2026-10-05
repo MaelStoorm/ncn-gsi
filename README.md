@@ -47,7 +47,7 @@ AdMob değerleri girilmezse sürüm derlemesi de Google'ın **test** reklamları
 1. **Google Play Console** geliştirici hesabı (bir kerelik 25 $). Yeni kişisel hesaplarda yayından önce 12 test kullanıcısıyla 14 günlük kapalı test zorunludur.
 2. **AdMob** hesabı açın, uygulamayı ekleyin, bir *Banner* reklam birimi oluşturun → kimlikleri GitHub'a girin.
 3. AdMob'da **Gizlilik ve mesajlaşma › GDPR** mesajını oluşturup yayınlayın (uygulamadaki izin ekranı buradan gelir).
-4. **Gizlilik politikası**: `docs/index.html` hazır. İçindeki `[E-POSTA ADRESİNİZ]` kısmını doldurun, depo ayarlarından *Pages › Branch: main › /docs* seçin. Adres `https://<kullanıcı>.github.io/<depo>/` olur; bunu Play Console'a girin.
+4. **Gizlilik politikası**: `docs/gizlilik.html` hazır. İçindeki `[E-POSTA ADRESİNİZ]` kısmını doldurun, depo ayarlarından *Pages › Branch: main › /docs* seçin. Web uygulaması `https://maelstoorm.github.io/ncn-gsi/`, gizlilik politikası `https://maelstoorm.github.io/ncn-gsi/gizlilik.html` adresinde yayınlanır; gizlilik adresini Play Console'a girin.
 5. Play Console'da: *Uygulama içeriği* → Reklam içeriyor: **Evet**, Reklam kimliği kullanımı: **Evet (Reklam)**, Veri güvenliği formu (AdMob: cihaz kimlikleri, yaklaşık konum, uygulama etkileşimleri), Hedef kitle: 18+.
 6. Mağaza girişi görselleri `store/` klasöründe: 512×512 ikon ve 1024×500 öne çıkan görsel. En az 2 telefon ekran görüntüsünü test APK'sından alın.
 7. `ncn-gsi-play-store-aab` içindeki `.aab` dosyasını *Test › Kapalı test* (sonra *Üretim*) sürümüne yükleyin. **Play Uygulama İmzalama** açık kalsın.
