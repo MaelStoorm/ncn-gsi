@@ -1,154 +1,251 @@
-<title>NCN ⇄ GSI Dönüştürücü</title>
+<!doctype html><html lang="tr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"></head><body><title>NCN ⇄ GSI Dönüştürücü</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Semi+Condensed:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
 <style>
-/* Layout: instrument-panel tool — left rail of inputs/settings, right work area with plan view, point table and GSI output. */
+/* Layout: field-instrument look — yellow casing (top bar, splash), black display panels; steps 1-2-3 down the page.
+   Deliberately single-theme (black + yellow), so every color is set explicitly here. */
 :root{
-  --bg:#eef1f0; --panel:#ffffff; --ink:#18211f; --muted:#5d6b67; --line:#d3dbd8;
-  --accent:#0f6b5c; --accent-ink:#ffffff; --accent-soft:#dcefea;
-  --warn:#b4570c; --warn-soft:#fbeadb; --err:#b3261e; --err-soft:#fbe1df; --ok:#2e7d32;
-  --s1:#0f6b5c; --s2:#c2410c; --s3:#3a5bd9; --s4:#8a3fb5; --s5:#a16207; --s6:#be185d;
-  --grid:#e3e8e6; --code-bg:#f6f8f7;
+  --bg:#0e0e0d; --panel:#181816; --panel2:#21211e; --ink:#f2f1ea; --muted:#9c9a8f; --line:#2f2e29;
+  --accent:#ffc20e; --accent-ink:#111110; --accent-soft:#2b2511;
+  --warn:#ffa24a; --warn-soft:#2e2113; --err:#ff6b5e; --err-soft:#341917; --ok:#b5e35a;
+  --s1:#ffc20e; --s2:#4fd1ff; --s3:#ff7a45; --s4:#a3e635; --s5:#f472b6; --s6:#e7e5dc;
+  --grid:#24231f; --code-bg:#11110f;
   --f-display:"Barlow Semi Condensed","Arial Narrow",system-ui,sans-serif;
   --f-body:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
   --f-mono:"IBM Plex Mono",ui-monospace,"SFMono-Regular",Consolas,monospace;
+  color-scheme:dark;
 }
-@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
-  --bg:#111816; --panel:#18211f; --ink:#e4ebe8; --muted:#97a6a1; --line:#2c3a36;
-  --accent:#4fbfa8; --accent-ink:#0b1513; --accent-soft:#1d3530;
-  --warn:#f0a35e; --warn-soft:#3a2716; --err:#f2877f; --err-soft:#3b1d1b; --ok:#7fca83;
-  --s1:#4fbfa8; --s2:#fb8c4c; --s3:#8aa2ff; --s4:#cf96f0; --s5:#e2b84a; --s6:#f27ab0;
-  --grid:#22302c; --code-bg:#131b19; color-scheme:dark}}
-:root[data-theme="dark"]{
-  --bg:#111816; --panel:#18211f; --ink:#e4ebe8; --muted:#97a6a1; --line:#2c3a36;
-  --accent:#4fbfa8; --accent-ink:#0b1513; --accent-soft:#1d3530;
-  --warn:#f0a35e; --warn-soft:#3a2716; --err:#f2877f; --err-soft:#3b1d1b; --ok:#7fca83;
-  --s1:#4fbfa8; --s2:#fb8c4c; --s3:#8aa2ff; --s4:#cf96f0; --s5:#e2b84a; --s6:#f27ab0;
-  --grid:#22302c; --code-bg:#131b19; color-scheme:dark}
 *{box-sizing:border-box}
-body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:14px;line-height:1.5}
-.wrap{max-width:1280px;margin:0 auto;padding-inline:16px;padding-block:20px 40px}
-header{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:8px 24px;margin-bottom:18px}
-h1{font-family:var(--f-display);font-weight:700;font-size:30px;letter-spacing:.01em;margin:0;line-height:1.1;text-wrap:balance}
-h1 .arr{color:var(--accent)}
-.sub{color:var(--muted);margin:4px 0 0;max-width:62ch}
-.stats{display:flex;gap:18px;padding:8px 14px;border:1px solid var(--line);border-radius:8px;background:var(--panel);font-family:var(--f-mono);font-size:12px;color:var(--muted)}
-.stats b{display:block;font-family:var(--f-display);font-size:24px;color:var(--ink);font-weight:600;line-height:1.1}
-.grid{display:grid;grid-template-columns:340px minmax(0,1fr);gap:16px;align-items:start}
+html,body{margin:0}
+[hidden]{display:none!important}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.5}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+
+/* top bar = instrument casing */
+.topbar{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:var(--accent);color:var(--accent-ink);display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 16px}
+.brand{display:flex;align-items:center;gap:10px}
+.badge{width:44px;height:44px;border-radius:50%;background:var(--accent-ink);display:grid;place-items:center;flex:none;box-shadow:inset 0 0 0 2px rgba(255,194,14,.35)}
+.tbr{display:flex;align-items:center;gap:10px}
+.brand svg rect{fill:var(--accent-ink)}
+.brand svg path[stroke]{stroke:var(--accent)} .brand svg path[fill]{fill:var(--accent)}
+.brand b{display:block;font-family:var(--f-display);font-size:21px;font-weight:700;line-height:1;letter-spacing:.02em}
+.brand div span{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.14em;opacity:.75}
+.iconbtn{width:36px;height:36px;border-radius:50%;border:2px solid var(--accent-ink);background:transparent;color:var(--accent-ink);font:700 17px/1 Georgia,serif;font-style:italic;cursor:pointer}
+.iconbtn:focus-visible{outline:3px solid var(--accent-ink);outline-offset:2px}
+
+.wrap{max-width:1180px;margin:0 auto;padding-inline:16px;padding-block:18px 40px}
+.modebar{margin:0 0 16px}
+.tabs{display:grid;grid-template-columns:1fr 1fr;gap:0;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:4px;max-width:560px}
+.tabs input{position:absolute;opacity:0;pointer-events:none}
+.tabs label{display:flex;flex-direction:column;align-items:center;gap:1px;padding:10px 8px;border-radius:7px;cursor:pointer;user-select:none;color:var(--muted);transition:background .15s,color .15s}
+.tabs label b{font-family:var(--f-display);font-size:20px;font-weight:700;letter-spacing:.03em;color:var(--ink)}
+.tabs label small{font-size:11px}
+.tabs input:checked+label{background:var(--accent);color:var(--accent-ink)}
+.tabs input:checked+label b{color:var(--accent-ink)}
+.tabs input:focus-visible+label{outline:2px solid var(--accent);outline-offset:2px}
+.sub{color:var(--muted);margin:10px 2px 0;font-size:14px;max-width:62ch}
+
+.grid{display:grid;grid-template-columns:350px minmax(0,1fr);gap:16px;align-items:start}
 @media (max-width:900px){.grid{grid-template-columns:minmax(0,1fr)}}
 .col{display:flex;flex-direction:column;gap:16px;min-width:0}
-section.card{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:14px;min-width:0}
-h2{font-family:var(--f-display);font-size:15px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;margin:0 0 10px;color:var(--muted);display:flex;align-items:center;justify-content:space-between;gap:8px}
-.drop{border:1.5px dashed var(--line);border-radius:6px;padding:18px 12px;text-align:center;cursor:pointer;transition:border-color .15s,background .15s}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:16px;min-width:0}
+h2{font-family:var(--f-display);font-size:19px;font-weight:600;letter-spacing:.02em;margin:0 0 12px;color:var(--ink);display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap}
+h2>span:first-child{display:flex;align-items:center;gap:10px}
+.step{display:inline-grid;place-items:center;width:26px;height:26px;border-radius:50%;background:var(--accent);color:var(--accent-ink);font:700 15px/1 var(--f-display);font-style:normal}
+.count{font-family:var(--f-mono);font-size:12px;font-weight:400;color:var(--muted);letter-spacing:0}
+.count b{color:var(--accent);font-weight:500}
+
+.drop{display:flex;flex-direction:column;align-items:center;gap:4px;border:2px dashed #4a4738;border-radius:10px;padding:22px 12px;text-align:center;cursor:pointer;transition:border-color .15s,background .15s}
 .drop:hover,.drop.over{border-color:var(--accent);background:var(--accent-soft)}
-.drop strong{display:block;font-weight:600}
-.drop span{color:var(--muted);font-size:12px}
-.files{list-style:none;margin:10px 0 0;padding:0;display:flex;flex-direction:column;gap:6px}
-.files li{display:grid;grid-template-columns:10px minmax(0,1fr) auto;gap:8px;align-items:center;padding:7px 8px;border:1px solid var(--line);border-radius:6px}
+.drop .plus{width:40px;height:40px;border-radius:50%;background:var(--accent);color:var(--accent-ink);display:grid;place-items:center;font:600 28px/1 var(--f-display);margin-bottom:4px}
+.drop strong{font-weight:600;font-size:16px}
+.drop>span:last-child{color:var(--muted);font-size:12px}
+.files{list-style:none;margin:12px 0 0;padding:0;display:flex;flex-direction:column;gap:6px}
+.files:empty{display:none}
+.files li{display:grid;grid-template-columns:10px minmax(0,1fr) auto;gap:10px;align-items:center;padding:8px 8px 8px 10px;background:var(--panel2);border-radius:8px}
 .files .dot{width:10px;height:10px;border-radius:50%}
 .files .nm{font-family:var(--f-mono);font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .files .meta{font-size:11px;color:var(--muted)}
-.files .ex{font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:var(--warn);margin-left:4px}
+.files .ex{font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:var(--accent);margin-left:6px}
 .ibtns{display:flex;gap:2px}
-.ib{border:0;background:transparent;color:var(--muted);width:24px;height:24px;border-radius:4px;cursor:pointer;font-size:13px;line-height:1}
+.ib{border:0;background:transparent;color:var(--muted);width:30px;height:30px;border-radius:6px;cursor:pointer;font-size:13px;line-height:1}
 .ib:hover{background:var(--accent-soft);color:var(--ink)}
-.ib:disabled{opacity:.3;cursor:default;background:transparent}
+.ib:disabled{opacity:.25;cursor:default;background:transparent}
+
+details.mini{margin-top:12px}
+details.mini>summary{cursor:pointer;font-size:13px;color:var(--muted);list-style:none;display:flex;align-items:center;gap:6px}
+details.mini>summary::-webkit-details-marker,.setsum::-webkit-details-marker{display:none}
+details.mini>summary::before{content:"›";display:inline-block;width:10px;color:var(--accent);font-weight:700;transition:transform .15s}
+details.mini[open]>summary::before{transform:rotate(90deg)}
+details.mini>summary:focus-visible,.setsum:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:4px}
+
+details.card{padding:0}
+.setsum{list-style:none;cursor:pointer;padding:14px 16px;display:flex;align-items:baseline;justify-content:space-between;gap:10px;font-family:var(--f-display);font-size:19px;font-weight:600}
+.setsum small{font-family:var(--f-mono);font-size:12px;font-weight:400;color:var(--muted);text-align:right}
+.setsum::after{content:"›";color:var(--accent);font-weight:700;transition:transform .15s}
+details[open]>.setsum::after{transform:rotate(90deg)}
+.setbody{padding:0 16px 14px}
+
 .row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
-.field{display:flex;flex-direction:column;gap:5px;margin-bottom:12px}
+.field{display:flex;flex-direction:column;gap:6px;margin-bottom:14px}
 .field>label,.flabel{font-size:12px;font-weight:500;color:var(--muted)}
-.seg{display:inline-flex;border:1px solid var(--line);border-radius:6px;overflow:hidden;flex-wrap:wrap}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden;flex-wrap:wrap;align-self:flex-start}
 .seg input{position:absolute;opacity:0;pointer-events:none}
-.seg label{padding:6px 10px;cursor:pointer;font-size:13px;border-right:1px solid var(--line);user-select:none}
+.seg label{padding:8px 12px;cursor:pointer;font-size:13px;border-right:1px solid var(--line);user-select:none;background:var(--panel2)}
 .seg label:last-of-type{border-right:0}
-.seg input:checked+label{background:var(--accent);color:var(--accent-ink)}
+.seg input:checked+label{background:var(--accent);color:var(--accent-ink);font-weight:600}
 .seg input:focus-visible+label{outline:2px solid var(--accent);outline-offset:-2px}
-select,textarea{font:inherit;color:var(--ink);background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:6px 8px}
+select,textarea,input#outName{font:inherit;color:var(--ink);background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:8px 10px}
+select{align-self:flex-start;min-width:170px}
 textarea{font-family:var(--f-mono);font-size:12px;width:100%;min-height:90px;resize:vertical}
-.chk{display:flex;gap:8px;align-items:flex-start;font-size:13px;margin-bottom:8px;cursor:pointer}
-.chk input{margin-top:3px;accent-color:var(--accent)}
+.chk{display:flex;gap:10px;align-items:flex-start;font-size:14px;margin-bottom:10px;cursor:pointer}
+.chk input{margin-top:3px;width:17px;height:17px;accent-color:var(--accent)}
 .hint{font-size:12px;color:var(--muted);margin:2px 0 0}
-.btn{font:inherit;font-weight:500;border:1px solid var(--line);background:var(--panel);color:var(--ink);padding:7px 12px;border-radius:6px;cursor:pointer}
+
+.btn{font:inherit;font-weight:600;border:1px solid var(--line);background:var(--panel2);color:var(--ink);padding:8px 14px;border-radius:8px;cursor:pointer}
 .btn:hover{border-color:var(--accent)}
 .btn.primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
-.btn.primary:hover{filter:brightness(1.08)}
-.btn:focus-visible,.ib:focus-visible,.drop:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.btn.primary:hover{filter:brightness(1.06)}
+.btn:disabled{opacity:.4;cursor:default}
+.btn.big{padding:13px 18px;font-size:16px}
+.btn:focus-visible,.ib:focus-visible,.drop:focus-visible,.pt:focus-visible,.linkbtn:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.linkbtn{border:0;background:none;color:var(--accent);font:inherit;font-size:13px;padding:8px 0 0;cursor:pointer;text-decoration:underline;text-underline-offset:3px}
+.actions{display:grid;grid-template-columns:2fr 1fr;gap:8px;margin-top:12px}
+.namerow{display:flex;flex-direction:column;gap:6px}
+.namebox{display:flex;align-items:center;background:var(--panel2);border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.namebox input#outName{border:0;border-radius:0;flex:1 1 auto;min-width:0;font-family:var(--f-mono);font-size:14px;background:transparent}
+.namebox span{padding:0 12px;font-family:var(--f-mono);font-size:13px;color:var(--accent);white-space:nowrap}
+
 .msgs{display:flex;flex-direction:column;gap:6px}
-.msg{font-size:13px;padding:7px 10px;border-radius:6px;border-left:3px solid}
+.msgs:empty{display:none}
+.msg{font-size:13px;padding:9px 12px;border-radius:8px;border-left:3px solid}
 .msg.warn{background:var(--warn-soft);border-color:var(--warn)}
 .msg.err{background:var(--err-soft);border-color:var(--err)}
 .msg.ok{background:var(--accent-soft);border-color:var(--accent)}
-.plan{position:relative;width:100%;aspect-ratio:16/9;max-width:100%;background:var(--code-bg);border-radius:6px;border:1px solid var(--line);overflow:hidden}
+
+.plan{position:relative;width:100%;aspect-ratio:16/9;max-width:100%;background:var(--code-bg);border-radius:8px;border:1px solid var(--line);overflow:hidden}
 @media (max-width:600px){.plan{aspect-ratio:1/1}}
 .plan canvas{position:absolute;inset:0;width:100%;height:100%;touch-action:none;cursor:grab}
 .plan canvas:active{cursor:grabbing}
-.ptools{position:absolute;top:8px;right:8px;display:flex;flex-direction:column;gap:4px}
-.pt{font:inherit;font-size:15px;font-weight:600;width:34px;height:34px;border-radius:6px;border:1px solid var(--line);background:var(--panel);color:var(--ink);cursor:pointer;display:grid;place-items:center;padding:0}
+.extent{position:absolute;left:10px;top:8px;font-family:var(--f-mono);font-size:11px;color:var(--muted);pointer-events:none;padding-left:22px}
+.ptools{position:absolute;top:8px;right:8px;display:flex;flex-direction:column;gap:6px}
+.pt{font:inherit;font-size:17px;font-weight:600;width:38px;height:38px;border-radius:8px;border:1px solid var(--line);background:var(--panel2);color:var(--ink);cursor:pointer;display:grid;place-items:center;padding:0}
 .pt#zLbl{font-size:11px;font-family:var(--f-mono)}
 .pt#zLbl[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
 .pt:hover{border-color:var(--accent)}
-.pt:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
-.tip{position:absolute;pointer-events:none;background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:6px 9px;font-family:var(--f-mono);font-size:11px;line-height:1.5;display:flex;flex-direction:column;box-shadow:0 4px 14px rgba(0,0,0,.12);white-space:nowrap}
+.tip{position:absolute;pointer-events:none;background:var(--panel);border:1px solid var(--accent);border-radius:8px;padding:7px 10px;font-family:var(--f-mono);font-size:11px;line-height:1.5;display:flex;flex-direction:column;box-shadow:0 6px 18px rgba(0,0,0,.5);white-space:nowrap}
 .tip b{font-family:var(--f-body);font-size:13px;color:var(--accent)}
+.legend{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:12px;color:var(--muted);margin-top:10px}
+.legend i{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:5px;vertical-align:middle}
+
 tbody tr{cursor:pointer}
 tbody tr:hover td{background:var(--accent-soft)}
-tr.sel td{background:var(--accent-soft);font-weight:500}
-.legend{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:12px;color:var(--muted);margin-top:8px}
-.legend i{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:5px;vertical-align:middle}
-.tblwrap{overflow:auto;max-height:340px;border:1px solid var(--line);border-radius:6px}
+tr.sel td{background:var(--accent-soft);color:var(--accent)}
+.tblwrap{overflow:auto;max-height:340px;border:1px solid var(--line);border-radius:8px}
 table{border-collapse:collapse;width:100%;font-size:12px;font-variant-numeric:tabular-nums}
-th,td{padding:5px 10px;text-align:right;white-space:nowrap;border-bottom:1px solid var(--grid)}
-th{position:sticky;top:0;background:var(--panel);font-weight:600;color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.05em;z-index:1}
+th,td{padding:6px 10px;text-align:right;white-space:nowrap;border-bottom:1px solid var(--grid)}
+th{position:sticky;top:0;background:var(--panel2);font-weight:600;color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.05em;z-index:1}
 td{font-family:var(--f-mono)}
 td:nth-child(1),th:nth-child(1),td:nth-child(2),th:nth-child(2){text-align:left}
 tr.dup td{background:var(--warn-soft)}
 tr.skip td{opacity:.45;text-decoration:line-through}
 .src{display:inline-flex;align-items:center;gap:5px;font-family:var(--f-body);color:var(--muted)}
 .src i{width:8px;height:8px;border-radius:50%}
-pre.out{margin:0;font-family:var(--f-mono);font-size:12px;line-height:1.6;background:var(--code-bg);border:1px solid var(--line);border-radius:6px;padding:10px 12px;overflow:auto;max-height:320px;white-space:pre}
-.wi{color:var(--muted)}
-.toast{font-size:12px;color:var(--ok);min-height:1.2em}
+pre.out{margin:0;font-family:var(--f-mono);font-size:12px;line-height:1.6;background:var(--code-bg);color:var(--ink);border:1px solid var(--line);border-radius:8px;padding:10px 12px;overflow:auto;max-height:320px;white-space:pre}
+.wi{color:var(--accent);opacity:.8}
+.toast{font-size:13px;color:var(--ok);min-height:1.3em;margin-top:6px}
 .legendgsi{font-size:12px;color:var(--muted);margin:8px 0 0;font-family:var(--f-mono)}
-.modebar{margin:0 0 16px}
-.modebar .seg label{padding:8px 16px;font-family:var(--f-display);font-weight:600;font-size:16px;letter-spacing:.02em}
 [data-mode="gsi2ncn"] .only-n2g,[data-mode="ncn2gsi"] .only-g2n{display:none!important}
 .foot{margin-top:28px;padding-top:14px;border-top:1px solid var(--line);color:var(--muted);font-size:12px;text-align:center}
-@media (max-width:900px){.col{display:contents}.c-files{order:1}.c-msgs{order:2}.c-plan{order:3}.c-out{order:4}.c-tbl{order:5}.c-set{order:6}}
-@media (max-width:600px){.drop{padding:26px 12px}h1{font-size:26px}.stats{width:100%;justify-content:space-around}}
-@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+
+/* phone: one column in task order, sticky action bar */
+.actionbar{display:none}
+@media (max-width:900px){
+  .col{display:contents}
+  .c-files{order:1}.c-msgs{order:2}.c-plan{order:3}.c-out{order:4}.c-set{order:5}
+  .actionbar{display:flex;position:fixed;left:0;right:0;bottom:0;z-index:15;gap:8px;align-items:center;padding:10px 16px calc(10px + env(safe-area-inset-bottom,0px));background:var(--panel);border-top:2px solid var(--accent)}
+  .actionbar .ab-info{flex:1 1 auto;font-family:var(--f-mono);font-size:13px;color:var(--muted)}
+  .actionbar .ab-info b{color:var(--accent);font-size:16px}
+  .actionbar .btn.big{padding:11px 16px}
+  .wrap{padding-bottom:110px}
+  .c-out .actions{display:none}
+}
+@media (max-width:600px){.tabs{max-width:none}.tabs label b{font-size:18px}}
+
+/* about sheet */
+.sheet-bg{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:30}
+.sheet{position:fixed;left:50%;bottom:0;transform:translateX(-50%);width:min(520px,100%);z-index:31;background:var(--panel);border-top:3px solid var(--accent);border-radius:16px 16px 0 0;padding:14px 20px calc(20px + env(safe-area-inset-bottom,0px))}
+.sheet .grab{width:44px;height:4px;border-radius:2px;background:var(--line);margin:0 auto 12px}
+.sheet h3{font-family:var(--f-display);font-size:24px;margin:0;color:var(--accent)}
+.sheet .muted{color:var(--muted);margin:2px 0 12px}
+.sheet .small{font-size:12px}
+.sheet dl{display:grid;grid-template-columns:auto 1fr;gap:8px 14px;margin:0 0 14px;font-size:14px}
+.sheet dt{color:var(--muted)} .sheet dd{margin:0}
+
+/* splash = instrument start-up screen */
+.splash{position:fixed;inset:0;z-index:50;background:var(--accent);color:var(--accent-ink);display:flex;flex-direction:column;align-items:center;justify-content:space-between;padding:calc(18vh + env(safe-area-inset-top,0px)) 24px calc(40px + env(safe-area-inset-bottom,0px));transition:opacity .4s ease,transform .4s ease;cursor:pointer}
+.splash.out{opacity:0;transform:scale(1.04);pointer-events:none}
+.sp-in{display:flex;flex-direction:column;align-items:center;gap:10px;animation:spIn .7s cubic-bezier(.2,.8,.2,1) both}
+.sp-mark{width:170px;height:170px;filter:drop-shadow(0 10px 14px rgba(0,0,0,.25))}
+.sp-name{font-family:var(--f-display);font-weight:700;font-size:46px;letter-spacing:.03em;line-height:1}
+.sp-name span{opacity:.7}
+.sp-tag{font-size:13px;font-weight:600;text-transform:uppercase;letter-spacing:.18em}
+.sp-foot{text-align:center;animation:spIn .7s .25s cubic-bezier(.2,.8,.2,1) both}
+.sp-by{font-size:11px;text-transform:uppercase;letter-spacing:.2em;opacity:.7}
+.sp-who{font-family:var(--f-display);font-size:24px;font-weight:700;letter-spacing:.02em}
+.sp-ver{font-size:12px;opacity:.7;margin-top:2px;font-family:var(--f-mono)}
+@keyframes spIn{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
 </style>
 
+<div class="splash" id="splash" role="dialog" aria-label="Açılış">
+  <div class="sp-in">
+    <canvas class="sp-mark ts3d" data-model="a" data-size="170" aria-hidden="true"></canvas>
+    <div class="sp-name">NCN <span>⇄</span> GSI</div>
+    <div class="sp-tag">Nokta dosyası dönüştürücü</div>
+  </div>
+  <div class="sp-foot">
+    <div class="sp-by">Geliştiren</div>
+    <div class="sp-who">Egemen Çalıkoğlu</div>
+    <div class="sp-ver">Sürüm 1.0 · © 2026</div>
+  </div>
+</div>
+
+<div class="topbar">
+  <div class="brand">
+    <span class="badge"><canvas class="ts3d" data-model="a" data-size="40" aria-hidden="true"></canvas></span>
+    <div><b>NCN ⇄ GSI</b><span>Dönüştürücü</span></div>
+  </div>
+  <div class="tbr">
+    <span class="badge"><canvas class="ts3d" data-model="b" data-size="40" data-phase="0.5" aria-hidden="true"></canvas></span>
+    <button class="iconbtn" id="aboutBtn" aria-label="Hakkında">i</button>
+  </div>
+</div>
+
 <div class="wrap" id="app" data-mode="ncn2gsi">
-  <header>
-    <div>
-      <h1 id="h1">NCN <span class="arr">→</span> GSI</h1>
-      <p class="sub" id="sub"></p>
-    </div>
-    <div class="stats" aria-live="polite">
-      <div><b id="stFiles">0</b>dosya</div>
-      <div><b id="stPts">0</b>nokta</div>
-      <div><b id="stDup">0</b>yinelenen</div>
-    </div>
-  </header>
+  <h1 id="h1" class="sr"></h1>
 
   <div class="modebar">
-    <div class="seg" role="radiogroup" aria-label="Dönüşüm yönü">
-      <input type="radio" name="mode" id="mN2G" value="ncn2gsi" checked><label for="mN2G">NCN → GSI</label>
-      <input type="radio" name="mode" id="mG2N" value="gsi2ncn"><label for="mG2N">GSI → NCN</label>
+    <div class="tabs" role="radiogroup" aria-label="Dönüşüm yönü">
+      <input type="radio" name="mode" id="mN2G" value="ncn2gsi" checked><label for="mN2G"><b>NCN → GSI</b><small>Netcad'den Leica'ya</small></label>
+      <input type="radio" name="mode" id="mG2N" value="gsi2ncn"><label for="mG2N"><b>GSI → NCN</b><small>Leica'dan Netcad'e</small></label>
     </div>
+    <p class="sub" id="sub"></p>
   </div>
 
   <div class="grid">
     <div class="col">
       <section class="card c-files">
-        <h2>Dosyalar</h2>
+        <h2><span><i class="step">1</i>Dosya ekle</span></h2>
         <div class="drop" id="drop" tabindex="0" role="button" aria-label="Dosya seç">
+          <span class="plus" aria-hidden="true">+</span>
           <strong id="dropT"></strong>
           <span id="dropS"></span>
         </div>
         <input type="file" id="fileIn" multiple hidden>
         <ul class="files" id="fileList"></ul>
-        <details style="margin-top:10px">
-          <summary style="cursor:pointer;font-size:13px;color:var(--muted)">Metin yapıştırarak ekle</summary>
+        <details class="mini">
+          <summary>Metin yapıştırarak ekle</summary>
           <div style="margin-top:8px">
             <textarea id="pasteIn"></textarea>
             <div class="row" style="margin-top:6px"><button class="btn" id="pasteAdd">Listeye ekle</button></div>
@@ -156,8 +253,9 @@ pre.out{margin:0;font-family:var(--f-mono);font-size:12px;line-height:1.6;backgr
         </details>
       </section>
 
-      <section class="card c-set">
-        <h2>Ayarlar</h2>
+      <details class="card c-set" id="setBox">
+        <summary class="setsum"><span>Ayarlar</span><small id="setSummary"></small></summary>
+        <div class="setbody">
         <div class="field">
           <span class="flabel">Eksen ataması</span>
           <div class="seg">
@@ -174,14 +272,13 @@ pre.out{margin:0;font-family:var(--f-mono);font-size:12px;line-height:1.6;backgr
               <input type="radio" name="fmt" id="fmt16" value="16" checked><label for="fmt16">GSI-16</label>
               <input type="radio" name="fmt" id="fmt8" value="8"><label for="fmt8">GSI-8</label>
             </div>
-            <p class="hint">GSI-8, 8 hane sınırı nedeniyle UTM/TM koordinatlarını taşıyamaz. Çoğu durumda GSI-16 seçin.</p>
           </div>
           <div class="field">
-            <label for="unit">Birim / hassasiyet</label>
+            <label for="unit">Hassasiyet</label>
             <select id="unit">
-              <option value="0">Metre · 1 mm (kod 0)</option>
-              <option value="6">Metre · 0,1 mm (kod 6)</option>
-              <option value="8">Metre · 0,01 mm (kod 8)</option>
+              <option value="0">1 mm</option>
+              <option value="6">0,1 mm</option>
+              <option value="8">0,01 mm</option>
             </select>
           </div>
           <div class="field">
@@ -191,8 +288,8 @@ pre.out{margin:0;font-family:var(--f-mono);font-size:12px;line-height:1.6;backgr
               <input type="radio" name="pad" id="padS" value=" "><label for="padS">Boşluk (   K1)</label>
             </div>
           </div>
-          <label class="chk"><input type="checkbox" id="incZ" checked> <span>Kotu yaz (83 kelimesi)</span></label>
-          <label class="chk"><input type="checkbox" id="zeroZ"> <span>Kotu 0 olan noktalarda 83'ü atla</span></label>
+          <label class="chk"><input type="checkbox" id="incZ" checked> <span>Kotu yaz</span></label>
+          <label class="chk"><input type="checkbox" id="zeroZ"> <span>Kotu 0 olanlarda kotu atla</span></label>
         </div>
 
         <div class="only-g2n">
@@ -204,29 +301,30 @@ pre.out{margin:0;font-family:var(--f-mono);font-size:12px;line-height:1.6;backgr
               <option value="4">4 hane</option>
             </select>
           </div>
-          <label class="chk"><input type="checkbox" id="stripZeros" checked> <span>Nokta adlarındaki dolgu sıfırlarını sil (000K1 → K1)</span></label>
+          <label class="chk"><input type="checkbox" id="stripZeros" checked> <span>Nokta adlarındaki dolgu sıfırlarını sil</span></label>
           <label class="chk"><input type="checkbox" id="ncnTail"> <span>Netcad ek sütunlarını yaz (0 "" "" "")</span></label>
         </div>
 
-        <div class="field" style="margin-top:4px">
+        <div class="field">
           <label for="dupMode">Aynı adlı noktalar</label>
           <select id="dupMode">
             <option value="keep">Hepsini yaz</option>
-            <option value="first">İlkini tut, diğerlerini atla</option>
+            <option value="first">İlkini tut</option>
             <option value="last">Sonuncuyu tut</option>
           </select>
         </div>
         <label class="chk"><input type="checkbox" id="crlf" checked> <span>Windows satır sonu (CRLF)</span></label>
-      </section>
+        </div>
+      </details>
     </div>
 
     <div class="col">
       <div class="msgs c-msgs" id="msgs"></div>
 
       <section class="card c-plan">
-        <h2>Plan görünümü <span style="font-family:var(--f-mono);text-transform:none;letter-spacing:0;font-weight:400;font-size:11px" id="extent"></span></h2>
+        <h2><span><i class="step">2</i>Kontrol et</span><span class="count"><b id="stPts">0</b> nokta · <b id="stFiles">0</b> dosya<span id="dupWrap"> · <b id="stDup">0</b> yinelenen</span></span></h2>
         <div class="plan" id="plan">
-          <canvas id="cv" aria-label="Noktaların plan görünümü. Kaydırmak için sürükleyin, yakınlaştırmak için tekerlek veya iki parmak kullanın."></canvas>
+          <canvas id="cv" aria-label="Noktaların plan görünümü. Sürükleyerek kaydırın, iki parmakla yakınlaştırın."></canvas>
           <div class="ptools">
             <button class="pt" id="zIn" aria-label="Yakınlaştır">+</button>
             <button class="pt" id="zOut" aria-label="Uzaklaştır">−</button>
@@ -234,42 +332,62 @@ pre.out{margin:0;font-family:var(--f-mono);font-size:12px;line-height:1.6;backgr
             <button class="pt" id="zLbl" aria-pressed="true" aria-label="Nokta adlarını göster/gizle">Ad</button>
           </div>
           <div class="tip" id="tip" hidden></div>
+          <span class="extent" id="extent"></span>
         </div>
-        <p class="hint" style="margin-top:6px">Sürükleyerek kaydırın, tekerlek veya iki parmakla yakınlaştırın. Bir noktaya dokununca koordinatları görünür.</p>
         <div class="legend" id="legend"></div>
-      </section>
-
-      <section class="card c-tbl">
-        <h2>Noktalar <span style="font-weight:400;text-transform:none;letter-spacing:0;font-size:12px" id="tblInfo"></span></h2>
-        <div class="tblwrap">
-          <table>
-            <thead><tr><th>#</th><th>Nokta</th><th>Y (sağa)</th><th>X (yukarı)</th><th>Z</th><th>Kaynak</th></tr></thead>
-            <tbody id="tbody"></tbody>
-          </table>
-        </div>
+        <details class="mini">
+          <summary>Nokta listesi <span id="tblInfo"></span></summary>
+          <div class="tblwrap" style="margin-top:8px">
+            <table>
+              <thead><tr><th>#</th><th>Nokta</th><th>Y (sağa)</th><th>X (yukarı)</th><th>Z</th><th>Kaynak</th></tr></thead>
+              <tbody id="tbody"></tbody>
+            </table>
+          </div>
+        </details>
       </section>
 
       <section class="card c-out">
-        <h2><span id="outTitle">GSI çıktısı</span>
-          <span class="row">
-            <button class="btn" id="copyBtn">Kopyala</button>
-            <button class="btn only-n2g" id="ncnBtn">Birleşik NCN indir</button>
-            <button class="btn primary" id="dlBtn">İndir</button>
-          </span>
-        </h2>
-        <div class="row" style="margin-bottom:8px">
+        <h2><span><i class="step">3</i><span id="outTitle">GSI çıktısı</span></span></h2>
+        <div class="namerow">
           <label for="outName" class="flabel">Dosya adı</label>
-          <input id="outName" value="BIRLESIK" style="font:inherit;font-family:var(--f-mono);font-size:13px;color:var(--ink);background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:5px 8px;min-width:0;flex:1 1 160px">
-          <span class="flabel" id="extLbl"></span>
+          <div class="namebox"><input id="outName" value="BIRLESIK"><span id="extLbl"></span></div>
         </div>
-        <pre class="out" id="out"></pre>
-        <p class="legendgsi only-n2g">11 = nokta no · 81 = Doğu · 82 = Kuzey · 83 = Kot</p>
-        <p class="legendgsi only-g2n">Ad · Y · X · Z</p>
+        <div class="actions">
+          <button class="btn primary big" id="dlBtn">İndir</button>
+          <button class="btn big" id="copyBtn">Kopyala</button>
+        </div>
+        <button class="linkbtn only-n2g" id="ncnBtn">Birleştirilmiş NCN'yi de indir</button>
         <div class="toast" id="toast" aria-live="polite"></div>
+        <details class="mini">
+          <summary>Dosya önizlemesi</summary>
+          <pre class="out" id="out" style="margin-top:8px"></pre>
+          <p class="legendgsi only-n2g">11 = nokta no · 81 = Doğu · 82 = Kuzey · 83 = Kot</p>
+          <p class="legendgsi only-g2n">Ad · Y · X · Z</p>
+        </details>
       </section>
     </div>
   </div>
   <footer class="foot">© 2026 Egemen Çalıkoğlu · Tüm hakları saklıdır.</footer>
+</div>
+
+<div class="actionbar" id="actionbar">
+  <span class="ab-info"><b id="abCount">0</b> nokta</span>
+  <button class="btn big" id="abCopy">Kopyala</button>
+  <button class="btn primary big" id="abDl">İndir</button>
+</div>
+
+<div class="sheet-bg" id="aboutBg" hidden></div>
+<div class="sheet" id="about" role="dialog" aria-modal="true" aria-labelledby="aboutT" hidden>
+  <div class="grab" aria-hidden="true"></div>
+  <h3 id="aboutT">NCN ⇄ GSI Dönüştürücü</h3>
+  <p class="muted">Sürüm 1.0</p>
+  <dl>
+    <dt>Geliştiren</dt><dd>Egemen Çalıkoğlu</dd>
+    <dt>Ne yapar</dt><dd>Netcad NCN ve Leica GSI-8 / GSI-16 nokta dosyalarını birleştirir, iki yönde dönüştürür ve noktaları planda gösterir.</dd>
+    <dt>Gizlilik</dt><dd>Dosyalarınız yalnızca cihazınızda işlenir, hiçbir yere gönderilmez.</dd>
+  </dl>
+  <p class="muted small">© 2026 Egemen Çalıkoğlu. Tüm hakları saklıdır.</p>
+  <button class="btn primary big" id="aboutClose" style="width:100%">Kapat</button>
 </div>
 
 <script>
@@ -281,10 +399,10 @@ let mode='ncn2gsi', seq=0, dl=null;
 const AB=window.AndroidBridge||null; // present inside the Android app
 
 const TXT={
-  ncn2gsi:{h:'NCN <span class="arr">→</span> GSI',sub:'Bir veya birden fazla Netcad NCN nokta dosyasını birleştirir ve Leica GSI formatında dışa aktarır. Dosyalar cihazınızda işlenir, hiçbir yere gönderilmez.',
-    dropT:'NCN dosyalarını buraya bırakın',dropS:'ya da dokunup seçin · .ncn .txt .csv · birden çok dosya',ph:'K1 420800.00 4539600.00 0.00',out:'GSI çıktısı',ext:'GSI',empty:'Başlamak için NCN dosyalarınızı ekleyin.'},
-  gsi2ncn:{h:'GSI <span class="arr">→</span> NCN',sub:'Leica GSI-8 veya GSI-16 dosyalarındaki koordinatlı noktaları okur, birleştirir ve Netcad NCN formatında dışa aktarır. Dosyalar cihazınızda işlenir, hiçbir yere gönderilmez.',
-    dropT:'GSI dosyalarını buraya bırakın',dropS:'ya da dokunup seçin · .gsi .txt · birden çok dosya',ph:'*110001+00000000000000K1 81..00+0000000420800000 82..00+0000004539600000 83..00+0000000000000000',out:'NCN çıktısı',ext:'NCN',empty:'Başlamak için GSI dosyalarınızı ekleyin.'}
+  ncn2gsi:{h:'NCN <span class="arr">→</span> GSI',sub:'Bir veya daha fazla NCN dosyasını birleştirip Leica GSI olarak kaydeder.',
+    dropT:'NCN dosyası seç',dropS:'.ncn .txt .csv · birden çok dosya seçebilirsiniz',ph:'K1 420800.00 4539600.00 0.00',out:'GSI çıktısı',ext:'GSI',empty:'Başlamak için NCN dosyalarınızı ekleyin.'},
+  gsi2ncn:{h:'GSI <span class="arr">→</span> NCN',sub:'GSI-8 / GSI-16 dosyalarındaki noktaları birleştirip Netcad NCN olarak kaydeder.',
+    dropT:'GSI dosyası seç',dropS:'.gsi .txt · birden çok dosya seçebilirsiniz',ph:'*110001+00000000000000K1 81..00+0000000420800000 82..00+0000004539600000 83..00+0000000000000000',out:'NCN çıktısı',ext:'NCN',empty:'Başlamak için GSI dosyalarınızı ekleyin.'}
 };
 
 /* ---------- parsing ---------- */
@@ -569,8 +687,119 @@ let rt;let lastW=0;window.addEventListener('resize',()=>{clearTimeout(rt);rt=set
 try{matchMedia('(prefers-color-scheme: dark)').addEventListener('change',render);}catch(e){}
 new MutationObserver(render).observe(document.documentElement,{attributes:true,attributeFilter:['data-theme']});
 
+
+/* ---------- simplified UI: summary line, sticky bar, about sheet, splash ---------- */
+function uiExtras(){
+  const o=opts();
+  $('setSummary').textContent=mode==='ncn2gsi'
+    ? `GSI-${o.fmt} · ${{'0':'1 mm','6':'0,1 mm','8':'0,01 mm'}[o.unit]} · ${o.swap?'81=X':'81=Y'}`
+    : `${o.dec} hane · ${o.swap?'81=X':'81=Y'}`;
+  $('abCount').textContent=state.n;
+  $('dupWrap').hidden=$('stDup').textContent==='0';
+  $('abDl').textContent=TXT[mode].ext+' indir';
+  $('abDl').disabled=$('abCopy').disabled=$('dlBtn').disabled=$('copyBtn').disabled=!state.n;
+}
+const _render=render; render=function(){_render();uiExtras();};
+$('abDl').addEventListener('click',()=>$('dlBtn').click());
+$('abCopy').addEventListener('click',()=>$('copyBtn').click());
+const openAbout=()=>{$('about').hidden=false;$('aboutBg').hidden=false;$('aboutClose').focus();};
+const closeAbout=()=>{$('about').hidden=true;$('aboutBg').hidden=true;$('aboutBtn').focus();};
+$('aboutBtn').addEventListener('click',openAbout);
+$('aboutClose').addEventListener('click',closeAbout);
+$('aboutBg').addEventListener('click',closeAbout);
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!$('about').hidden)closeAbout();});
+(function(){const sp=$('splash');
+  const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const hide=()=>{if(sp.classList.contains('out'))return;sp.classList.add('out');setTimeout(()=>sp.remove(),reduce?0:450);};
+  sp.addEventListener('click',hide); setTimeout(hide,AB?1800:1200);})();
+
+/* ---------- tiny 3D total stations (flat-shaded, no library, works offline) ---------- */
+(function(){
+  const Y='#ffc20e', K='#1b1b19', LENS='#2f5878', SCR='#86b0a2';
+  function addFace(F,p,c,ctr){F.push({p,c,ctr});}
+  function box(F,x0,x1,y0,y1,z0,z1,c){
+    const v=[[x0,y0,z0],[x1,y0,z0],[x1,y1,z0],[x0,y1,z0],[x0,y0,z1],[x1,y0,z1],[x1,y1,z1],[x0,y1,z1]];
+    const ctr=[(x0+x1)/2,(y0+y1)/2,(z0+z1)/2];
+    [[0,3,2,1],[4,5,6,7],[0,1,5,4],[3,7,6,2],[0,4,7,3],[1,2,6,5]].forEach(f=>addFace(F,f.map(i=>v[i]),c,ctr));
+  }
+  function cyl(F,axis,cx,cy,cz,r,len,c,cap,n){
+    n=n||16; const A=[],B=[];
+    for(let i=0;i<n;i++){const t=i/n*Math.PI*2,u=r*Math.cos(t),w=r*Math.sin(t);
+      if(axis==='y'){A.push([cx+u,cy-len/2,cz+w]);B.push([cx+u,cy+len/2,cz+w]);}
+      else if(axis==='z'){A.push([cx+u,cy+w,cz-len/2]);B.push([cx+u,cy+w,cz+len/2]);}
+      else {A.push([cx-len/2,cy+u,cz+w]);B.push([cx+len/2,cy+u,cz+w]);}}
+    const ctr=[cx,cy,cz];
+    for(let i=0;i<n;i++){const j=(i+1)%n;addFace(F,[A[i],A[j],B[j],B[i]],c,ctr);}
+    addFace(F,A.slice(),cap||c,ctr); addFace(F,B.slice(),cap||c,ctr);
+  }
+  const MODELS={
+    a(){const F=[];                                   // compact site instrument with carry handle
+      cyl(F,'y',0,.09,0,.62,.18,K);
+      box(F,-.62,.62,.18,.5,-.45,.45,Y);
+      box(F,-.42,.42,.22,.48,.45,.5,K); box(F,-.3,.3,.29,.44,.5,.53,SCR);
+      box(F,-.6,-.34,.5,1.45,-.3,.3,Y); box(F,.34,.6,.5,1.45,-.3,.3,Y);
+      cyl(F,'x',-.63,1.05,0,.12,.06,K); cyl(F,'x',.63,1.05,0,.12,.06,K);
+      cyl(F,'z',0,1.05,0,.2,.9,K,LENS);
+      box(F,-.55,-.43,1.45,1.64,-.06,.06,K); box(F,.43,.55,1.45,1.64,-.06,.06,K);
+      box(F,-.55,.55,1.6,1.7,-.09,.09,K);
+      return {F,h:1.7};},
+    b(){const F=[];                                   // taller instrument, displays both faces
+      cyl(F,'y',0,.09,0,.6,.18,K);
+      box(F,-.55,.55,.18,.42,-.42,.42,K);
+      box(F,-.6,.6,.42,.64,-.46,.46,Y);
+      box(F,-.4,.4,.45,.62,.46,.5,K); box(F,-.28,.28,.5,.6,.5,.53,SCR);
+      box(F,-.4,.4,.45,.62,-.5,-.46,K); box(F,-.28,.28,.5,.6,-.53,-.5,SCR);
+      box(F,-.6,-.36,.64,1.72,-.32,.32,Y); box(F,.36,.6,.64,1.72,-.32,.32,Y);
+      box(F,-.63,-.6,.85,1.5,-.24,.24,K); box(F,.6,.63,.85,1.5,-.24,.24,K);
+      cyl(F,'z',0,1.25,0,.23,1.0,K,LENS);
+      box(F,-.05,.05,1.48,1.57,-.28,.18,K);
+      return {F,h:1.75};}
+  };
+  const hex=c=>[1,3,5].map(i=>parseInt(c.slice(i,i+2),16));
+  const items=[];
+  document.querySelectorAll('canvas.ts3d').forEach(cv=>{
+    const m=MODELS[cv.dataset.model](), size=+cv.dataset.size||40, dpr=Math.min(3,window.devicePixelRatio||1);
+    cv.width=cv.height=size*dpr; cv.style.width=cv.style.height=size+'px';
+    items.push({cv,ctx:cv.getContext('2d'),m,size,dpr,phase:+(cv.dataset.phase||0)});
+  });
+  const L=(()=>{const v=[-.45,.75,.55],n=Math.hypot(...v);return v.map(x=>x/n);})();
+  function draw(it,ang){
+    const {ctx,m,size,dpr}=it, S=size*dpr, D=6, tilt=-.32, ca=Math.cos(ang),sa=Math.sin(ang),cb=Math.cos(tilt),sb=Math.sin(tilt);
+    const T=p=>{let x=p[0],y=p[1]-m.h/2,z=p[2];const x1=x*ca+z*sa,z1=-x*sa+z*ca;return [x1,y*cb-z1*sb,y*sb+z1*cb];};
+    const sc=S*(size<=60?0.43:0.36);
+    const faces=[];
+    m.F.forEach(f=>{
+      const P=f.p.map(T), C=T(f.ctr);
+      const a=P[0],b=P[1],c=P[2];
+      let n=[(b[1]-a[1])*(c[2]-a[2])-(b[2]-a[2])*(c[1]-a[1]),(b[2]-a[2])*(c[0]-a[0])-(b[0]-a[0])*(c[2]-a[2]),(b[0]-a[0])*(c[1]-a[1])-(b[1]-a[1])*(c[0]-a[0])];
+      const cen=[0,1,2].map(k=>P.reduce((s,p)=>s+p[k],0)/P.length);
+      if(n[0]*(cen[0]-C[0])+n[1]*(cen[1]-C[1])+n[2]*(cen[2]-C[2])<0) n=n.map(v=>-v);
+      const nl=Math.hypot(...n)||1; n=n.map(v=>v/nl);
+      if(n[0]*(0-cen[0])+n[1]*(0-cen[1])+n[2]*(D-cen[2])<=0) return;   // facing away
+      const k=.48+.62*Math.max(0,n[0]*L[0]+n[1]*L[1]+n[2]*L[2]);
+      faces.push({P,z:cen[2],k,c:f.c});
+    });
+    faces.sort((u,v)=>u.z-v.z);
+    ctx.clearRect(0,0,S,S); ctx.lineJoin='round'; ctx.lineWidth=Math.max(.6,S/160); ctx.strokeStyle='rgba(0,0,0,.45)';
+    faces.forEach(f=>{
+      ctx.beginPath();
+      f.P.forEach((p,i)=>{const g=D/(D-p[2]);const x=S/2+p[0]*g*sc, y=S*0.56-p[1]*g*sc; i?ctx.lineTo(x,y):ctx.moveTo(x,y);});
+      ctx.closePath();
+      const [r,g,b]=hex(f.c);ctx.fillStyle=`rgb(${Math.min(255,r*f.k)|0},${Math.min(255,g*f.k)|0},${Math.min(255,b*f.k)|0})`;
+      ctx.fill(); ctx.stroke();
+    });
+  }
+  const still=matchMedia('(prefers-reduced-motion: reduce)').matches, PERIOD=7000;
+  function frame(t){
+    items.forEach(it=>{ if(it.cv.isConnected) draw(it,(still?0.6:(t/PERIOD+it.phase)*Math.PI*2)); });
+    if(!still && !document.hidden) requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+  document.addEventListener('visibilitychange',()=>{if(!document.hidden&&!still)requestAnimationFrame(frame);});
+})();
 window.__test={parseNCN,parseGSI,buildGSI,buildNCN};
 render();
 if(!AB&&window.claude&&window.claude.use){window.claude.use('downloads').then(d=>{dl=d;render();}).catch(()=>{});}
 })();
 </script>
+</body></html>

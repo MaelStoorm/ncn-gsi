@@ -78,7 +78,7 @@ public class MainActivity extends Activity {
 
         boolean night = (getResources().getConfiguration().uiMode
                 & Configuration.UI_MODE_NIGHT_MASK) == Configuration.UI_MODE_NIGHT_YES;
-        int bg = night ? Color.parseColor("#111816") : Color.parseColor("#EEF1F0");
+        int bg = Color.parseColor("#0E0E0D");
 
         LinearLayout root = new LinearLayout(this);
         root.setOrientation(LinearLayout.VERTICAL);
@@ -100,8 +100,6 @@ public class MainActivity extends Activity {
         } else {
             int flags = View.SYSTEM_UI_FLAG_LAYOUT_STABLE | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
                     | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION;
-            if (!night) flags |= View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR;
-            if (!night && Build.VERSION.SDK_INT >= 26) flags |= View.SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR;
             root.setSystemUiVisibility(flags);
         }
         applySystemBarInsets(root);
