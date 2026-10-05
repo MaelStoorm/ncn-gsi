@@ -715,58 +715,100 @@ document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!$('about').hidden)
 
 /* ---------- tiny 3D total stations (flat-shaded, no library, works offline) ---------- */
 (function(){
-  const Y='#ffc20e', K='#1b1b19', LENS='#2f5878', SCR='#86b0a2';
+  const Y='#ffc20e', YD='#e0a800', K='#1d1d1b', K2='#2a2a27', LENS='#2c5d82', SCR='#8fc1b0', KEY='#3a3a36', RED='#d8402f';
   function addFace(F,p,c,ctr){F.push({p,c,ctr});}
+  function poly(F,pts,c,ctr){addFace(F,pts,c,ctr);}
+  // prism along Y with chamfered vertical edges (rounded-looking body)
+  function rbox(F,x0,x1,y0,y1,z0,z1,c,ch){
+    ch=ch==null?Math.min(x1-x0,z1-z0)*0.18:ch;
+    const P=[[x0+ch,z0],[x1-ch,z0],[x1,z0+ch],[x1,z1-ch],[x1-ch,z1],[x0+ch,z1],[x0,z1-ch],[x0,z0+ch]];
+    const A=P.map(p=>[p[0],y0,p[1]]),B=P.map(p=>[p[0],y1,p[1]]),ctr=[(x0+x1)/2,(y0+y1)/2,(z0+z1)/2];
+    for(let i=0;i<8;i++){const j=(i+1)%8;poly(F,[A[i],A[j],B[j],B[i]],c,ctr);}
+    poly(F,A.slice().reverse(),c,ctr); poly(F,B.slice(),c,ctr);
+  }
   function box(F,x0,x1,y0,y1,z0,z1,c){
     const v=[[x0,y0,z0],[x1,y0,z0],[x1,y1,z0],[x0,y1,z0],[x0,y0,z1],[x1,y0,z1],[x1,y1,z1],[x0,y1,z1]];
     const ctr=[(x0+x1)/2,(y0+y1)/2,(z0+z1)/2];
-    [[0,3,2,1],[4,5,6,7],[0,1,5,4],[3,7,6,2],[0,4,7,3],[1,2,6,5]].forEach(f=>addFace(F,f.map(i=>v[i]),c,ctr));
+    [[0,3,2,1],[4,5,6,7],[0,1,5,4],[3,7,6,2],[0,4,7,3],[1,2,6,5]].forEach(f=>poly(F,f.map(i=>v[i]),c,ctr));
   }
-  function cyl(F,axis,cx,cy,cz,r,len,c,cap,n){
-    n=n||16; const A=[],B=[];
-    for(let i=0;i<n;i++){const t=i/n*Math.PI*2,u=r*Math.cos(t),w=r*Math.sin(t);
-      if(axis==='y'){A.push([cx+u,cy-len/2,cz+w]);B.push([cx+u,cy+len/2,cz+w]);}
-      else if(axis==='z'){A.push([cx+u,cy+w,cz-len/2]);B.push([cx+u,cy+w,cz+len/2]);}
-      else {A.push([cx-len/2,cy+u,cz+w]);B.push([cx+len/2,cy+u,cz+w]);}}
+  function cyl(F,axis,cx,cy,cz,r,len,c,cap,n,r2){
+    n=n||20; r2=r2==null?r:r2; const A=[],B=[];
+    for(let i=0;i<n;i++){const t=i/n*Math.PI*2,cs=Math.cos(t),sn=Math.sin(t);
+      if(axis==='y'){A.push([cx+r*cs,cy-len/2,cz+r*sn]);B.push([cx+r2*cs,cy+len/2,cz+r2*sn]);}
+      else if(axis==='z'){A.push([cx+r*cs,cy+r*sn,cz-len/2]);B.push([cx+r2*cs,cy+r2*sn,cz+len/2]);}
+      else {A.push([cx-len/2,cy+r*cs,cz+r*sn]);B.push([cx+len/2,cy+r2*cs,cz+r2*sn]);}}
     const ctr=[cx,cy,cz];
-    for(let i=0;i<n;i++){const j=(i+1)%n;addFace(F,[A[i],A[j],B[j],B[i]],c,ctr);}
-    addFace(F,A.slice(),cap||c,ctr); addFace(F,B.slice(),cap||c,ctr);
+    for(let i=0;i<n;i++){const j=(i+1)%n;poly(F,[A[i],A[j],B[j],B[i]],c,ctr);}
+    poly(F,A.slice(),cap||c,ctr); poly(F,B.slice(),cap||c,ctr);
+  }
+  // tribrach: base plate, three foot screws, levelling body
+  function tribrach(F){
+    cyl(F,'y',0,.03,0,.72,.06,K2,null,24);
+    for(let i=0;i<3;i++){const t=i*2*Math.PI/3+Math.PI/6;cyl(F,'y',.5*Math.cos(t),.14,.5*Math.sin(t),.09,.16,K,null,10,.11);}
+    cyl(F,'y',0,.27,0,.6,.1,K,null,24,.55);
+  }
+  // keypad + screen on a face at z = zf (dir +1 front / -1 back)
+  function panel(F,zf,dir,w,y0,y1){
+    const d=dir;
+    box(F,-w,w,y0,y1,Math.min(zf,zf+.05*d),Math.max(zf,zf+.05*d),K);
+    const zs=zf+.05*d, zs2=zs+.025*d;
+    box(F,-w*.78,w*.25,y0+(y1-y0)*.3,y1-(y1-y0)*.12,Math.min(zs,zs2),Math.max(zs,zs2),SCR);
+    for(let r=0;r<3;r++)for(let k=0;k<2;k++){
+      const kx=w*.38+k*w*.26, ky=y0+(y1-y0)*(.22+r*.24);
+      box(F,kx,kx+w*.18,ky,ky+(y1-y0)*.15,Math.min(zs,zs2),Math.max(zs,zs2),KEY);}
+  }
+  function telescope(F,y,len,r){
+    cyl(F,'z',0,y,0,r,len,K,LENS,22);
+    cyl(F,'z',0,y,len/2+.05,r*1.12,.1,K2,LENS,22);            // objective ring / sunshade
+    cyl(F,'z',0,y,-len/2-.08,r*.55,.16,K2,'#111',16);          // eyepiece
+    box(F,-.05,.05,y+r,y+r+.1,-len*.3,len*.25,K);              // finder sight
+    box(F,-.035,.035,y+r+.1,y+r+.14,len*.15,len*.24,RED);
   }
   const MODELS={
-    a(){const F=[];                                   // compact site instrument with carry handle
-      cyl(F,'y',0,.09,0,.62,.18,K);
-      box(F,-.62,.62,.18,.5,-.45,.45,Y);
-      box(F,-.42,.42,.22,.48,.45,.5,K); box(F,-.3,.3,.29,.44,.5,.53,SCR);
-      box(F,-.6,-.34,.5,1.45,-.3,.3,Y); box(F,.34,.6,.5,1.45,-.3,.3,Y);
-      cyl(F,'x',-.63,1.05,0,.12,.06,K); cyl(F,'x',.63,1.05,0,.12,.06,K);
-      cyl(F,'z',0,1.05,0,.2,.9,K,LENS);
-      box(F,-.55,-.43,1.45,1.64,-.06,.06,K); box(F,.43,.55,1.45,1.64,-.06,.06,K);
-      box(F,-.55,.55,1.6,1.7,-.09,.09,K);
-      return {F,h:1.7};},
-    b(){const F=[];                                   // taller instrument, displays both faces
-      cyl(F,'y',0,.09,0,.6,.18,K);
-      box(F,-.55,.55,.18,.42,-.42,.42,K);
-      box(F,-.6,.6,.42,.64,-.46,.46,Y);
-      box(F,-.4,.4,.45,.62,.46,.5,K); box(F,-.28,.28,.5,.6,.5,.53,SCR);
-      box(F,-.4,.4,.45,.62,-.5,-.46,K); box(F,-.28,.28,.5,.6,-.53,-.5,SCR);
-      box(F,-.6,-.36,.64,1.72,-.32,.32,Y); box(F,.36,.6,.64,1.72,-.32,.32,Y);
-      box(F,-.63,-.6,.85,1.5,-.24,.24,K); box(F,.6,.63,.85,1.5,-.24,.24,K);
-      cyl(F,'z',0,1.25,0,.23,1.0,K,LENS);
-      box(F,-.05,.05,1.48,1.57,-.28,.18,K);
-      return {F,h:1.75};}
+    a(){const F=[];                                           // compact site instrument with carry handle
+      tribrach(F);
+      rbox(F,-.62,.62,.32,.62,-.46,.46,Y,.16);
+      panel(F,.46,1,.42,.36,.6);
+      rbox(F,-.62,-.34,.62,1.48,-.31,.31,Y,.07); rbox(F,.34,.62,.62,1.48,-.31,.31,Y,.07);
+      cyl(F,'x',-.64,1.07,0,.13,.05,K,null,14); cyl(F,'x',.64,1.07,0,.13,.05,K,null,14);   // trunnion caps
+      cyl(F,'x',.66,.8,.12,.06,.1,K,null,10);                                               // tangent screw
+      telescope(F,1.07,.84,.19);
+      box(F,-.55,-.44,1.48,1.66,-.06,.06,K); box(F,.44,.55,1.48,1.66,-.06,.06,K);
+      rbox(F,-.58,.58,1.62,1.72,-.09,.09,K,.03);
+      return {F,h:1.78};},
+    b(){const F=[];                                           // taller instrument, displays both faces
+      tribrach(F);
+      rbox(F,-.56,.56,.32,.46,-.43,.43,K,.14);
+      rbox(F,-.62,.62,.46,.68,-.47,.47,Y,.16);
+      panel(F,.47,1,.4,.49,.66); panel(F,-.47,-1,.4,.49,.66);
+      rbox(F,-.62,-.36,.68,1.74,-.33,.33,Y,.08); rbox(F,.36,.62,.68,1.74,-.33,.33,Y,.08);
+      box(F,-.645,-.62,.86,1.52,-.24,.24,K); box(F,.62,.645,.86,1.52,-.24,.24,K);
+      cyl(F,'x',-.67,1.28,0,.12,.05,YD,null,14); cyl(F,'x',.67,1.28,0,.12,.05,YD,null,14);
+      cyl(F,'x',.68,.95,.15,.06,.1,K,null,10);
+      telescope(F,1.28,.96,.22);
+      return {F,h:1.8};}
   };
   const hex=c=>[1,3,5].map(i=>parseInt(c.slice(i,i+2),16));
   const items=[];
   document.querySelectorAll('canvas.ts3d').forEach(cv=>{
     const m=MODELS[cv.dataset.model](), size=+cv.dataset.size||40, dpr=Math.min(3,window.devicePixelRatio||1);
     cv.width=cv.height=size*dpr; cv.style.width=cv.style.height=size+'px';
+    m.F.forEach(f=>f.rgb=hex(f.c));
     items.push({cv,ctx:cv.getContext('2d'),m,size,dpr,phase:+(cv.dataset.phase||0)});
   });
-  const L=(()=>{const v=[-.45,.75,.55],n=Math.hypot(...v);return v.map(x=>x/n);})();
+  const nrm=v=>{const l=Math.hypot(...v)||1;return v.map(x=>x/l);};
+  const L=nrm([-.45,.75,.6]), Hh=nrm([L[0],L[1],L[2]+1]);
   function draw(it,ang){
-    const {ctx,m,size,dpr}=it, S=size*dpr, D=6, tilt=-.32, ca=Math.cos(ang),sa=Math.sin(ang),cb=Math.cos(tilt),sb=Math.sin(tilt);
-    const T=p=>{let x=p[0],y=p[1]-m.h/2,z=p[2];const x1=x*ca+z*sa,z1=-x*sa+z*ca;return [x1,y*cb-z1*sb,y*sb+z1*cb];};
-    const sc=S*(size<=60?0.43:0.36);
+    const {ctx,m,size,dpr}=it, S=size*dpr, D=6, tilt=-.3, ca=Math.cos(ang),sa=Math.sin(ang),cb=Math.cos(tilt),sb=Math.sin(tilt);
+    const T=p=>{const x=p[0],y=p[1]-m.h/2,z=p[2];const x1=x*ca+z*sa,z1=-x*sa+z*ca;return [x1,y*cb-z1*sb,y*sb+z1*cb];};
+    const sc=S*(size<=60?0.43:0.36), cy0=S*0.56;
+    const prj=p=>{const g=D/(D-p[2]);return [S/2+p[0]*g*sc, cy0-p[1]*g*sc];};
+    ctx.clearRect(0,0,S,S);
+    // soft ground shadow
+    const gp=prj(T([0,0,0])); const sh=ctx.createRadialGradient(gp[0],gp[1],0,gp[0],gp[1],sc*.95);
+    sh.addColorStop(0,'rgba(0,0,0,.35)'); sh.addColorStop(1,'rgba(0,0,0,0)');
+    ctx.save(); ctx.translate(gp[0],gp[1]); ctx.scale(1,.32); ctx.translate(-gp[0],-gp[1]);
+    ctx.fillStyle=sh; ctx.beginPath(); ctx.arc(gp[0],gp[1],sc*.95,0,Math.PI*2); ctx.fill(); ctx.restore();
     const faces=[];
     m.F.forEach(f=>{
       const P=f.p.map(T), C=T(f.ctr);
@@ -774,18 +816,20 @@ document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!$('about').hidden)
       let n=[(b[1]-a[1])*(c[2]-a[2])-(b[2]-a[2])*(c[1]-a[1]),(b[2]-a[2])*(c[0]-a[0])-(b[0]-a[0])*(c[2]-a[2]),(b[0]-a[0])*(c[1]-a[1])-(b[1]-a[1])*(c[0]-a[0])];
       const cen=[0,1,2].map(k=>P.reduce((s,p)=>s+p[k],0)/P.length);
       if(n[0]*(cen[0]-C[0])+n[1]*(cen[1]-C[1])+n[2]*(cen[2]-C[2])<0) n=n.map(v=>-v);
-      const nl=Math.hypot(...n)||1; n=n.map(v=>v/nl);
-      if(n[0]*(0-cen[0])+n[1]*(0-cen[1])+n[2]*(D-cen[2])<=0) return;   // facing away
-      const k=.48+.62*Math.max(0,n[0]*L[0]+n[1]*L[1]+n[2]*L[2]);
-      faces.push({P,z:cen[2],k,c:f.c});
+      n=nrm(n);
+      if(n[0]*(0-cen[0])+n[1]*(0-cen[1])+n[2]*(D-cen[2])<=0) return;
+      const dif=Math.max(0,n[0]*L[0]+n[1]*L[1]+n[2]*L[2]);
+      const spec=Math.pow(Math.max(0,n[0]*Hh[0]+n[1]*Hh[1]+n[2]*Hh[2]),18)*.45;
+      faces.push({P,z:cen[2],k:.42+.68*dif,spec,rgb:f.rgb});
     });
     faces.sort((u,v)=>u.z-v.z);
-    ctx.clearRect(0,0,S,S); ctx.lineJoin='round'; ctx.lineWidth=Math.max(.6,S/160); ctx.strokeStyle='rgba(0,0,0,.45)';
+    ctx.lineJoin='round'; ctx.lineWidth=Math.max(.5,S/220);
     faces.forEach(f=>{
       ctx.beginPath();
-      f.P.forEach((p,i)=>{const g=D/(D-p[2]);const x=S/2+p[0]*g*sc, y=S*0.56-p[1]*g*sc; i?ctx.lineTo(x,y):ctx.moveTo(x,y);});
+      f.P.forEach((p,i)=>{const q=prj(p); i?ctx.lineTo(q[0],q[1]):ctx.moveTo(q[0],q[1]);});
       ctx.closePath();
-      const [r,g,b]=hex(f.c);ctx.fillStyle=`rgb(${Math.min(255,r*f.k)|0},${Math.min(255,g*f.k)|0},${Math.min(255,b*f.k)|0})`;
+      const col=f.rgb.map(v=>Math.min(255,v*f.k+255*f.spec)|0);
+      ctx.fillStyle=`rgb(${col})`; ctx.strokeStyle=`rgba(${col.map(v=>v*.55|0)},.9)`;
       ctx.fill(); ctx.stroke();
     });
   }
