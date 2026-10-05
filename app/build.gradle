@@ -17,7 +17,7 @@ android {
     compileSdk 36
 
     defaultConfig {
-        applicationId "com.egemen.ncngsi"
+        applicationId "com.egemen.jalon"
         minSdk 23
         targetSdk 36
         versionCode Integer.parseInt(System.getenv("VERSION_CODE") ?: "1")
@@ -39,13 +39,13 @@ android {
         debug {
             manifestPlaceholders = [admobAppId: TEST_APP_ID]
             resValue "string", "admob_banner_id", TEST_BANNER_ID
-            resValue "string", "app_name", "NCN GSI Dönüştürücü"
+            resValue "string", "app_name", "Jalon"
         }
         release {
             minifyEnabled false
             manifestPlaceholders = [admobAppId: releaseAppId]
             resValue "string", "admob_banner_id", releaseBannerId
-            resValue "string", "app_name", "NCN GSI Dönüştürücü"
+            resValue "string", "app_name", "Jalon"
             if (ksFile) {
                 signingConfig signingConfigs.release
             }

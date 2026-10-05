@@ -1,4 +1,4 @@
-# NCN ⇄ GSI Dönüştürücü (Android)
+# Jalon — NCN ⇄ GSI Dönüştürücü (Android)
 
 © 2026 Egemen Çalıkoğlu. Tüm hakları saklıdır. Ayrıntılar için [LICENSE](LICENSE).
 
@@ -44,8 +44,13 @@ AdMob değerleri girilmezse sürüm derlemesi de Google'ın **test** reklamları
 
 ## Paket adı
 
-`com.egemen.ncngsi`. Play Store'a ilk yüklemeden sonra değiştirilemez; değiştirmek isterseniz `app/build.gradle` içindeki `namespace` ve `applicationId` satırlarını ve `java/com/egemen/ncngsi` klasörünü birlikte değiştirin.
+`com.egemen.jalon`. Play Store'a ilk yüklemeden sonra değiştirilemez; değiştirmek isterseniz `app/build.gradle` içindeki `namespace` ve `applicationId` satırlarını ve `java/com/egemen/ncngsi` klasörünü birlikte değiştirin.
 
 ## Sürüm güncelleme
 
 `versionCode` her GitHub Actions çalışmasında otomatik artar. Görünen sürüm adı için `app/build.gradle` içindeki `versionName` değerini değiştirin.
+
+## Play Store mağaza bilgileri (öneri)
+
+- **Uygulama adı (en fazla 30 karakter):** Jalon: NCN GSI Dönüştürücü
+- **Kısa açıklama (en fazla 80 karakter):** Netcad NCN ve Leica GSI nokta dosyalarını birleştir, dönüştür, planda gör.

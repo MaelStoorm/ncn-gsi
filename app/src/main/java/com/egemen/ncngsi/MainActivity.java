@@ -1,5 +1,5 @@
 /*
- * NCN ⇄ GSI Dönüştürücü
+ * Jalon — NCN ⇄ GSI Dönüştürücü
  * Telif Hakkı (c) 2026 Egemen Çalıkoğlu. Tüm hakları saklıdır.
  */
 package com.egemen.ncngsi;
