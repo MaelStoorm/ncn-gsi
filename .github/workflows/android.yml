@@ -26,10 +26,13 @@ jobs:
       - name: Yükleme anahtarını hazırla (varsa)
         env:
           KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
         run: |
           if [ -n "$KEYSTORE_BASE64" ]; then
-            echo "$KEYSTORE_BASE64" | base64 -d > "$RUNNER_TEMP/upload.jks"
+            echo "$KEYSTORE_BASE64" | tr -d '[:space:]' | base64 -d > "$RUNNER_TEMP/upload.jks"
             echo "KEYSTORE_FILE=$RUNNER_TEMP/upload.jks" >> "$GITHUB_ENV"
+            echo "Anahtar dosyası SHA-256: $(sha256sum "$RUNNER_TEMP/upload.jks" | cut -c1-16) boyut: $(stat -c%s "$RUNNER_TEMP/upload.jks")"
+            keytool -list -keystore "$RUNNER_TEMP/upload.jks" -storepass "$(echo -n "$KEYSTORE_PASSWORD" | tr -d '[:space:]')" 2>&1 | grep -iE "entry|alias|error|incorrect|Keystore type" || true
             echo "İmzalı sürüm derlenecek."
           else
             echo "KEYSTORE_BASE64 tanımlı değil: yalnızca test APK'sı imzalı olacak."
