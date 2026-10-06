@@ -28,9 +28,9 @@ android {
         release {
             if (ksFile) {
                 storeFile file(ksFile)
-                storePassword System.getenv("KEYSTORE_PASSWORD")
-                keyAlias System.getenv("KEY_ALIAS")
-                keyPassword System.getenv("KEY_PASSWORD")
+                storePassword System.getenv("KEYSTORE_PASSWORD")?.trim()
+                keyAlias "jalon"
+                keyPassword System.getenv("KEY_PASSWORD")?.trim()
             }
         }
     }
