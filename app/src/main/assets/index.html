@@ -724,7 +724,7 @@ document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!$('about').hidden)
 (function(){const sp=$('splash');
   const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
   const hide=()=>{if(sp.classList.contains('out'))return;sp.classList.add('out');setTimeout(()=>sp.remove(),reduce?0:450);};
-  sp.addEventListener('click',hide); setTimeout(hide,AB?1800:1200);})();
+  sp.addEventListener('click',hide); setTimeout(hide,AB?5500:1200);})();
 
 /* ---------- tiny 3D total stations (flat-shaded, no library, works offline) ---------- */
 (function(){
