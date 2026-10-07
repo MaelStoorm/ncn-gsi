@@ -111,6 +111,10 @@ textarea{font-family:var(--f-mono);font-size:12px;width:100%;min-height:90px;res
 .btn:focus-visible,.ib:focus-visible,.drop:focus-visible,.pt:focus-visible,.linkbtn:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 .linkbtn{border:0;background:none;color:var(--accent);font:inherit;font-size:13px;padding:8px 0 0;cursor:pointer;text-decoration:underline;text-underline-offset:3px}
 .actions{display:grid;grid-template-columns:2fr 1fr;gap:8px;margin-top:12px}
+.morefmt{margin-top:14px;padding-top:12px;border-top:1px solid var(--line)}
+.fmtbtns{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-top:6px}
+.fmtbtns .btn{padding:9px 4px;font-size:14px}
+.fmtnote{margin:8px 0 0;font-size:12px;color:var(--muted);line-height:1.4}
 .namerow{display:flex;flex-direction:column;gap:6px}
 .namebox{display:flex;align-items:center;background:var(--panel2);border:1px solid var(--line);border-radius:8px;overflow:hidden}
 .namebox input#outName{border:0;border-radius:0;flex:1 1 auto;min-width:0;font-family:var(--f-mono);font-size:14px;background:transparent}
@@ -370,6 +374,16 @@ pre.out{margin:0;font-family:var(--f-mono);font-size:12px;line-height:1.6;backgr
           <button class="btn big" id="copyBtn">Kopyala</button>
         </div>
         <button class="linkbtn only-n2g" id="ncnBtn">Birleştirilmiş NCN'yi de indir</button>
+        <div class="morefmt">
+          <span class="flabel">Diğer formatlarda indir</span>
+          <div class="fmtbtns">
+            <button class="btn" data-fmt="xlsx">Excel</button>
+            <button class="btn" data-fmt="csv">CSV</button>
+            <button class="btn" data-fmt="xyz">XYZ</button>
+            <button class="btn" data-fmt="dxf">DXF</button>
+          </div>
+          <p class="fmtnote">Excel ve CSV'de nokta no, Y, X, Z ayrı sütunlardadır. DXF; AutoCAD ve Netcad'de açılır, DWG gerekiyorsa oradan DWG olarak kaydedebilirsiniz.</p>
+        </div>
         <div class="toast" id="toast" aria-live="polite"></div>
         <details class="mini">
           <summary>Dosya önizlemesi</summary>
@@ -424,8 +438,9 @@ function parseNCN(text){
   const pts=[],errs=[];
   text.replace(/^﻿/,'').split(/\r?\n/).forEach((raw,i)=>{
     const line=raw.trim(); if(!line||/^[#;\/]/.test(line))return;
-    const tok=(line.match(/"[^"]*"|[^\s,;\t]+/g)||[]).filter(t=>!t.startsWith('"'));
+    const tok=line.includes(';')?line.split(';').map(t=>t.trim().replace(/^"(.*)"$/,'$1')):(line.match(/"[^"]*"|[^\s,;\t]+/g)||[]).filter(t=>!t.startsWith('"'));
     const y=numTok(tok[1]),x=numTok(tok[2]); let z=numTok(tok[3]);
+    if(!pts.length&&!errs.length&&/[A-Za-zÇĞİÖŞÜçğıöşü]/.test(tok[1]||'')&&!isFinite(y))return; // başlık satırı
     if(!tok[0]||!isFinite(y)||!isFinite(x)){errs.push(i+1);return;}
     pts.push({n:tok[0],y,x,z:isFinite(z)?z:null});
   });
@@ -524,7 +539,7 @@ function opts(){
 }
 function color(i){return getComputedStyle(document.documentElement).getPropertyValue(SER[i%SER.length]).trim();}
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
-let state={out:[],ncn:[],n:0};
+let state={out:[],ncn:[],n:0,pts:[]};
 
 function render(){
   const o=opts(), T=TXT[mode], fl=files();
@@ -558,7 +573,7 @@ function render(){
     lines=buildNCN(outPts,o);
     if(outPts.some(p=>p.ft)) m.push(['warn','Bazı değerler fit biriminde (birim kodu 1/7). Metreye çevrilmeden yazıldı.']);
   }
-  state={out:lines,ncn:buildNCN(outPts,{dec:4,ncnTail:false}),n:outPts.length};
+  state={out:lines,ncn:buildNCN(outPts,{dec:4,ncnTail:false}),n:outPts.length,pts:outPts};
 
   $('stFiles').textContent=fl.length; $('stPts').textContent=outPts.length; $('stDup').textContent=dupNames.length;
   if(!fl.length) m.unshift(['ok',T.empty]);
@@ -696,6 +711,76 @@ $('copyBtn').addEventListener('click',()=>{const t=txt(state.out);
   try{navigator.clipboard.writeText(t).then(()=>toast(state.out.length+' satır kopyalandı.'),fb);}catch(e){fb();}});
 $('dlBtn').addEventListener('click',()=>save(TXT[mode].ext,txt(state.out)));
 $('ncnBtn').addEventListener('click',()=>save('NCN',txt(state.ncn)));
+
+/* ---------- diğer formatlar: Excel (xlsx), CSV, XYZ, DXF ---------- */
+const fx=(v,d)=>v==null||!isFinite(v)?'':v.toFixed(d);
+function buildCSV(pts){ // Türkçe Excel: ';' ayraç, ',' ondalık
+  const c=v=>fx(v,3).replace('.',',');
+  const q=t=>/[;"\n]/.test(t)?'"'+t.replace(/"/g,'""')+'"':t;
+  return ['Nokta No;Y (Sağa);X (Yukarı);Z (Kot)',...pts.map(p=>[q(p.n),c(p.y),c(p.x),c(p.z)].join(';'))];
+}
+function buildXYZ(pts){return pts.map(p=>[fx(p.y,3),fx(p.x,3),fx(p.z==null?0:p.z,3)].join(' '));}
+function buildDXF(pts){
+  let minY=Infinity,maxY=-Infinity,minX=Infinity,maxX=-Infinity;
+  pts.forEach(p=>{minY=Math.min(minY,p.y);maxY=Math.max(maxY,p.y);minX=Math.min(minX,p.x);maxX=Math.max(maxX,p.x);});
+  const span=Math.max(maxY-minY,maxX-minX,1), h=Math.min(2,Math.max(0.15,+(span/120).toFixed(2)));
+  const L=[];const g=(c,v)=>{L.push(String(c));L.push(String(v));};
+  g(0,'SECTION');g(2,'ENTITIES');
+  pts.forEach(p=>{const z=p.z==null?0:p.z;
+    g(0,'POINT');g(8,'NOKTA');g(10,fx(p.y,4));g(20,fx(p.x,4));g(30,fx(z,4));
+    g(0,'TEXT');g(8,'NOKTA_ADI');g(10,fx(p.y+h*0.4,4));g(20,fx(p.x+h*0.4,4));g(30,fx(z,4));g(40,h);g(1,String(p.n).replace(/[\r\n]/g,' '));});
+  g(0,'ENDSEC');g(0,'EOF');
+  return L;
+}
+// Küçük, kütüphanesiz XLSX yazıcı (sıkıştırmasız zip)
+const CRC=(()=>{const t=new Uint32Array(256);for(let n=0;n<256;n++){let c=n;for(let k=0;k<8;k++)c=c&1?0xEDB88320^(c>>>1):c>>>1;t[n]=c>>>0;}return t;})();
+function crc32(b){let c=0xFFFFFFFF;for(let i=0;i<b.length;i++)c=CRC[(c^b[i])&255]^(c>>>8);return (c^0xFFFFFFFF)>>>0;}
+function zip(files){
+  const enc=new TextEncoder(),parts=[],cen=[];let off=0;
+  files.forEach(([name,text])=>{
+    const nb=enc.encode(name),db=enc.encode(text),crc=crc32(db);
+    const h=new DataView(new ArrayBuffer(30));h.setUint32(0,0x04034b50,true);h.setUint16(4,20,true);h.setUint16(6,0x0800,true);
+    h.setUint32(14,crc,true);h.setUint32(18,db.length,true);h.setUint32(22,db.length,true);h.setUint16(26,nb.length,true);
+    parts.push(new Uint8Array(h.buffer),nb,db);
+    const c=new DataView(new ArrayBuffer(46));c.setUint32(0,0x02014b50,true);c.setUint16(4,20,true);c.setUint16(6,20,true);c.setUint16(8,0x0800,true);
+    c.setUint32(16,crc,true);c.setUint32(20,db.length,true);c.setUint32(24,db.length,true);c.setUint16(28,nb.length,true);c.setUint32(42,off,true);
+    cen.push(new Uint8Array(c.buffer),nb);off+=30+nb.length+db.length;});
+  const cl=cen.reduce((a,b)=>a+b.length,0),e=new DataView(new ArrayBuffer(22));
+  e.setUint32(0,0x06054b50,true);e.setUint16(8,files.length,true);e.setUint16(10,files.length,true);e.setUint32(12,cl,true);e.setUint32(16,off,true);
+  const all=[...parts,...cen,new Uint8Array(e.buffer)],out=new Uint8Array(all.reduce((a,b)=>a+b.length,0));let o=0;all.forEach(b=>{out.set(b,o);o+=b.length;});
+  return out;
+}
+function buildXLSX(pts){
+  const x=t=>String(t).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+  const str=(r,c,t)=>`<c r="${c}${r}" t="inlineStr"${r===1?' s="1"':''}><is><t>${x(t)}</t></is></c>`;
+  const num=(r,c,v)=>v==null||!isFinite(v)?'':`<c r="${c}${r}" s="2"><v>${+v.toFixed(4)}</v></c>`;
+  let rows=`<row r="1">${str(1,'A','Nokta No')}${str(1,'B','Y (Sağa)')}${str(1,'C','X (Yukarı)')}${str(1,'D','Z (Kot)')}</row>`;
+  pts.forEach((p,i)=>{const r=i+2;rows+=`<row r="${r}">${str(r,'A',p.n)}${num(r,'B',p.y)}${num(r,'C',p.x)}${num(r,'D',p.z)}</row>`;});
+  const sheet=`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><sheetViews><sheetView workbookViewId="0"><pane ySplit="1" topLeftCell="A2" activePane="bottomLeft" state="frozen"/></sheetView></sheetViews><cols><col min="1" max="1" width="16" customWidth="1"/><col min="2" max="4" width="15" customWidth="1"/></cols><sheetData>${rows}</sheetData></worksheet>`;
+  const styles=`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><numFmts count="1"><numFmt numFmtId="164" formatCode="0.000"/></numFmts><fonts count="2"><font><sz val="11"/><name val="Calibri"/></font><font><b/><sz val="11"/><name val="Calibri"/></font></fonts><fills count="2"><fill><patternFill patternType="none"/></fill><fill><patternFill patternType="gray125"/></fill></fills><borders count="1"><border/></borders><cellStyleXfs count="1"><xf/></cellStyleXfs><cellXfs count="3"><xf/><xf fontId="1" applyFont="1"/><xf numFmtId="164" applyNumberFormat="1"/></cellXfs><cellStyles count="1"><cellStyle name="Normal" xfId="0" builtinId="0"/></cellStyles></styleSheet>`;
+  return zip([
+    ['[Content_Types].xml','<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/><Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/><Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/></Types>'],
+    ['_rels/.rels','<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/></Relationships>'],
+    ['xl/workbook.xml','<?xml version="1.0" encoding="UTF-8" standalone="yes"?><workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><sheets><sheet name="Noktalar" sheetId="1" r:id="rId1"/></sheets></workbook>'],
+    ['xl/_rels/workbook.xml.rels','<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet1.xml"/><Relationship Id="rId2" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/></Relationships>'],
+    ['xl/worksheets/sheet1.xml',sheet],
+    ['xl/styles.xml',styles]]);
+}
+async function saveBytes(ext,bytes,mime){
+  if(!state.n){toast('Kaydedilecek nokta yok.');return;}
+  const name=baseName()+'.'+ext;
+  if(AB&&AB.saveFileBase64){let b='';for(let i=0;i<bytes.length;i+=0x8000)b+=String.fromCharCode.apply(null,bytes.subarray(i,i+0x8000));AB.saveFileBase64(name,btoa(b));return;}
+  if(AB){toast('Excel çıktısı için uygulamayı güncelleyin.');return;}
+  try{const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([bytes],{type:mime}));a.download=name;document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove();},500);toast(name+' indirildi.');}
+  catch(e){toast('İndirilemedi.');}
+}
+document.querySelector('.fmtbtns').addEventListener('click',e=>{const b=e.target.closest('button[data-fmt]');if(!b)return;const pts=state.pts||[];
+  const f=b.dataset.fmt;
+  if(f==='xlsx') return saveBytes('xlsx',buildXLSX(pts),'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+  if(f==='csv') return save('csv','﻿'+buildCSV(pts).join('\r\n')+'\r\n');
+  if(f==='xyz') return save('xyz',txt(buildXYZ(pts)));
+  if(f==='dxf') return save('dxf',buildDXF(pts).join('\r\n')+'\r\n');
+});
 let rt;let lastW=0;window.addEventListener('resize',()=>{clearTimeout(rt);rt=setTimeout(()=>{const w=$('plan').clientWidth;if(w!==lastW){lastW=w;view={k:1,tx:0,ty:0};}render();},120);});
 try{matchMedia('(prefers-color-scheme: dark)').addEventListener('change',render);}catch(e){}
 new MutationObserver(render).observe(document.documentElement,{attributes:true,attributeFilter:['data-theme']});

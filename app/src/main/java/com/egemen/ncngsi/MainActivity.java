@@ -70,6 +70,7 @@ public class MainActivity extends Activity {
     private boolean pageReady = false;
     private final List<Uri> pendingUris = new ArrayList<>();
     private String pendingSaveData;
+    private byte[] pendingSaveBytes;
     private String pendingSaveName;
 
     @Override
@@ -180,10 +181,37 @@ public class MainActivity extends Activity {
         }
 
         @JavascriptInterface
+        public void saveFileBase64(String name, String b64) {
+            byte[] bytes;
+            try {
+                bytes = android.util.Base64.decode(b64, android.util.Base64.DEFAULT);
+            } catch (Exception e) {
+                toastJs("Dosya hazırlanamadı.");
+                return;
+            }
+            final byte[] fb = bytes;
+            runOnUiThread(() -> {
+                pendingSaveName = name;
+                pendingSaveData = null;
+                pendingSaveBytes = fb;
+                Intent i = new Intent(Intent.ACTION_CREATE_DOCUMENT);
+                i.addCategory(Intent.CATEGORY_OPENABLE);
+                i.setType("application/octet-stream");
+                i.putExtra(Intent.EXTRA_TITLE, name);
+                try {
+                    startActivityForResult(i, REQ_SAVE);
+                } catch (Exception e) {
+                    toastJs("Kaydetme ekranı açılamadı.");
+                }
+            });
+        }
+
+        @JavascriptInterface
         public void saveFile(String name, String data) {
             runOnUiThread(() -> {
                 pendingSaveName = name;
                 pendingSaveData = data;
+                pendingSaveBytes = null;
                 Intent i = new Intent(Intent.ACTION_CREATE_DOCUMENT);
                 i.addCategory(Intent.CATEGORY_OPENABLE);
                 // octet-stream: Android'in adın sonuna .txt eklemesini önler (.GSI / .NCN korunur)
@@ -220,14 +248,16 @@ public class MainActivity extends Activity {
             flushPendingUris();
         } else if (requestCode == REQ_SAVE) {
             String payload = pendingSaveData, name = pendingSaveName;
+            byte[] raw = pendingSaveBytes;
             pendingSaveData = null;
-            if (resultCode != RESULT_OK || data == null || data.getData() == null || payload == null) {
+            pendingSaveBytes = null;
+            if (resultCode != RESULT_OK || data == null || data.getData() == null || (payload == null && raw == null)) {
                 toastJs("Kaydetme iptal edildi.");
                 return;
             }
             try (OutputStream os = getContentResolver().openOutputStream(data.getData(), "wt")) {
                 if (os == null) throw new Exception("stream");
-                os.write(payload.getBytes(StandardCharsets.UTF_8));
+                os.write(raw != null ? raw : payload.getBytes(StandardCharsets.UTF_8));
                 toastJs(displayName(data.getData(), name) + " kaydedildi.");
             } catch (Exception e) {
                 toastJs("Dosya yazılamadı: " + e.getMessage());
