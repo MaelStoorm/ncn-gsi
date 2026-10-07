@@ -562,7 +562,7 @@ function render(){
 
   $('stFiles').textContent=fl.length; $('stPts').textContent=outPts.length; $('stDup').textContent=dupNames.length;
   if(!fl.length) m.unshift(['ok',T.empty]);
-  if(fl.some(f=>f.example)) m.unshift(['ok',mode==='ncn2gsi'?'Örnek olarak iki saha dosyası yüklü. Kendi dosyanızı eklediğinizde örnekler kaldırılır.':'Örnek olarak birleştirilmiş GSI dosyası yüklü. Kendi dosyanızı eklediğinizde örnek kaldırılır.']);
+  if(fl.some(f=>f.example)) m.unshift(['ok',mode==='ncn2gsi'?'Örnek olarak iki deneme dosyası yüklü. Kendi dosyanızı eklediğinizde örnekler kaldırılır.':'Örnek olarak birleştirilmiş GSI dosyası yüklü. Kendi dosyanızı eklediğinizde örnek kaldırılır.']);
   if(dupNames.length) m.push(['warn',`${dupNames.length} nokta adı birden fazla kez geçiyor: ${dupNames.slice(0,6).map(esc).join(', ')}${dupNames.length>6?'…':''}. Ayarlardan nasıl işleneceğini seçin.`]);
   fl.forEach((f,i)=>{const e=parsed[i].errs;if(e.length)m.push(['warn',`${esc(f.name)}: ${e.length} satır okunamadı (satır ${e.slice(0,8).join(', ')}${e.length>8?'…':''}).`]);});
   $('msgs').innerHTML=m.map(([c,t])=>`<div class="msg ${c}">${t}</div>`).join('');
