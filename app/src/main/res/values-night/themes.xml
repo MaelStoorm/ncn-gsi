@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources xmlns:tools="http://schemas.android.com/tools">
-    <color name="page_bg">#0E0E0D</color>
+    <color name="page_bg">#050806</color>
     <style name="AppTheme" parent="android:Theme.Material.NoActionBar">
         <item name="android:windowBackground">@color/page_bg</item>
-        <item name="android:colorAccent">#FFC20E</item>
-        <item name="android:colorPrimary">#FFC20E</item>
+        <item name="android:colorAccent">#1E6B47</item>
+        <item name="android:colorPrimary">#1E6B47</item>
         <item name="android:statusBarColor">@android:color/transparent</item>
         <item name="android:navigationBarColor">@android:color/transparent</item>
         <item name="android:windowLightStatusBar" tools:targetApi="23">false</item>

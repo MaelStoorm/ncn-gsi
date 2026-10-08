@@ -2,7 +2,7 @@ name: Android derleme
 
 on:
   push:
-    branches: [main]
+    branches: [main, yeni-arayuz]
   workflow_dispatch:
 
 jobs:
@@ -28,7 +28,9 @@ jobs:
           KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
           KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
         run: |
-          if [ -n "$KEYSTORE_BASE64" ]; then
+          if [ "${{ github.ref_name }}" != "main" ]; then
+            echo "Deneme dalı: yalnızca test APK'sı derlenecek."
+          elif [ -n "$KEYSTORE_BASE64" ]; then
             echo "$KEYSTORE_BASE64" | tr -d '[:space:]' | base64 -d > "$RUNNER_TEMP/upload.jks"
             echo "KEYSTORE_FILE=$RUNNER_TEMP/upload.jks" >> "$GITHUB_ENV"
             echo "Anahtar dosyası SHA-256: $(sha256sum "$RUNNER_TEMP/upload.jks" | cut -c1-16) boyut: $(stat -c%s "$RUNNER_TEMP/upload.jks")"
@@ -49,7 +51,10 @@ jobs:
         run: |
           chmod +x gradlew
           mkdir -p cikti
-          if [ -n "$KEYSTORE_FILE" ]; then
+          if [ "${{ github.ref_name }}" != "main" ]; then
+            ./gradlew --no-daemon assembleDebug
+            cp app/build/outputs/apk/debug/*.apk cikti/Jalon-deneme.apk
+          elif [ -n "$KEYSTORE_FILE" ]; then
             # İmzalı sürüm: telefona kurulacak APK + Play Store paketi (AAB)
             ./gradlew --no-daemon assembleRelease bundleRelease
             cp app/build/outputs/apk/release/*.apk cikti/NCN-GSI-Donusturucu.apk
@@ -69,9 +74,10 @@ jobs:
       - name: APK'yı "apk" dalına koy
         run: |
           cd cikti
-          git init -q -b apk
+          OUT=apk; [ "${{ github.ref_name }}" != "main" ] && OUT=deneme-apk
+          git init -q -b "$OUT"
           git config user.name "github-actions"
           git config user.email "github-actions@users.noreply.github.com"
           git add -A
           git commit -qm "Derleme ${{ github.run_number }} (${{ github.sha }})"
-          git push -f "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git" apk
+          git push -f "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git" "$OUT"

@@ -79,7 +79,7 @@ public class MainActivity extends Activity {
 
         boolean night = (getResources().getConfiguration().uiMode
                 & Configuration.UI_MODE_NIGHT_MASK) == Configuration.UI_MODE_NIGHT_YES;
-        int bg = Color.parseColor("#0E0E0D");
+        int bg = Color.parseColor("#050806");
 
         LinearLayout root = new LinearLayout(this);
         root.setOrientation(LinearLayout.VERTICAL);
