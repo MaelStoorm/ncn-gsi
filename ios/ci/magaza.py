@@ -160,12 +160,17 @@ def surum_yerel(app, ver_id):
 
 
 def ekranlar(key, loc_id):
-    files = sorted((KOK / key).glob("*.png"))
+    ekran_seti(KOK / key, "APP_IPHONE_67", loc_id)
+    if (KOK / key / "ipad").is_dir():
+        ekran_seti(KOK / key / "ipad", "APP_IPAD_PRO_3GEN_129", loc_id)
+
+
+def ekran_seti(klasor, tip, loc_id):
+    files = sorted(klasor.glob("*.png"))
     if not files:
         return
     from PIL import Image
     w, h = Image.open(files[0]).size
-    tip = "APP_IPHONE_67"
     sets = (api("GET", f"/appStoreVersionLocalizations/{loc_id}/appScreenshotSets") or {}).get("data", [])
     s = next((x for x in sets if x["attributes"]["screenshotDisplayType"] == tip), None)
     if not s:
@@ -192,7 +197,7 @@ def ekranlar(key, loc_id):
         if api("PATCH", f"/appScreenshots/{shot['id']}", {"data": {"type": "appScreenshots", "id": shot["id"],
                "attributes": {"uploaded": True, "sourceFileChecksum": hashlib.md5(data).hexdigest()}}}):
             n += 1
-    print(f"  ekran görüntüleri: {n}/{len(files)} ({w}x{h})")
+    print(f"  ekran görüntüleri {tip}: {n}/{len(files)} ({w}x{h})")
 
 
 def derleme(app_id, ver_id):
