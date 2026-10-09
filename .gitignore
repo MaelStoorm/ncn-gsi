@@ -9,3 +9,4 @@ local.properties
 .DS_Store
 ios/*.xcodeproj/
 ios/build/
+__pycache__/
