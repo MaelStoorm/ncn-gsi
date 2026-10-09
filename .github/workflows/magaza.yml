@@ -1,0 +1,35 @@
+name: App Store sayfalarını doldur
+
+# ios/magaza/ içindeki metinleri ve ekran görüntülerini App Store Connect'e yükler.
+# Elle çalıştırılır (Actions › App Store sayfalarını doldur › Run workflow).
+
+on:
+  workflow_dispatch:
+    inputs:
+      uygulamalar:
+        description: Uygulamalar (boşlukla ayrılmış; jalon kopek kedi deprem metro afiyet teyze) ya da hepsi
+        default: hepsi
+
+permissions:
+  contents: write
+
+jobs:
+  magaza:
+    runs-on: ubuntu-latest
+    env:
+      ASC_KEY_ID: ${{ secrets.ASC_KEY_ID || '9T56U9RA2U' }}
+      ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID || 'b5342a93-c449-4f20-bb30-9d03e0767ad6' }}
+      ASC_KEY_P8: ${{ secrets.ASC_KEY_P8 }}
+      UYGULAMALAR: ${{ github.event.inputs.uygulamalar }}
+    steps:
+      - uses: actions/checkout@v5
+      - run: |
+          pip install -q cryptography pillow
+          python3 -u ios/ci/magaza.py 2>&1 | tee "$RUNNER_TEMP/magaza.txt"
+      - name: Sonucu ios-kayit dalına yaz
+        if: always()
+        run: |
+          cd "$RUNNER_TEMP" && mkdir k && cp magaza.txt k/ && cd k
+          git init -q -b ios-kayit && git add -A
+          git -c user.name=github-actions -c user.email=github-actions@users.noreply.github.com commit -qm "App Store sayfası kaydı"
+          git push -qf "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" ios-kayit
