@@ -259,6 +259,38 @@ def inceleme(ver_id):
 
 secim = os.environ.get("UYGULAMALAR", "hepsi").split()
 kayit = json.loads((KOK / "magaza.json").read_text(encoding="utf-8"))
+if secim and secim[0] == "gonder":
+    # incelemeye gönder: gonder [anahtarlar...]
+    hedef = secim[1:] or list(kayit)
+    for key in hedef:
+        app = kayit[key]
+        a = tek(f"/apps?filter[bundleId]={app['bundle']}&limit=1")
+        vers = (api("GET", f"/apps/{a['id']}/appStoreVersions?filter[platform]=IOS&limit=3") or {}).get("data", [])
+        ver = next((v for v in vers if v["attributes"]["appStoreState"] in ("PREPARE_FOR_SUBMISSION", "DEVELOPER_REJECTED", "REJECTED")), None)
+        if not ver:
+            print(f"{key}: gönderilecek sürüm yok ({', '.join(v['attributes']['appStoreState'] for v in vers)})")
+            continue
+        subs = (api("GET", f"/reviewSubmissions?filter[app]={a['id']}&filter[platform]=IOS&filter[state]=READY_FOR_REVIEW,UNRESOLVED_ISSUES&limit=1") or {}).get("data", [])
+        if subs:
+            sub = subs[0]
+        else:
+            r = api("POST", "/reviewSubmissions", {"data": {"type": "reviewSubmissions", "attributes": {"platform": "IOS"},
+                    "relationships": {"app": {"data": {"type": "apps", "id": a["id"]}}}}})
+            if not r:
+                print(f"{key}: gönderim açılamadı"); continue
+            sub = r["data"]
+        items = (api("GET", f"/reviewSubmissions/{sub['id']}/items", quiet=True) or {}).get("data", [])
+        if not items:
+            if api("POST", "/reviewSubmissionItems", {"data": {"type": "reviewSubmissionItems",
+                   "relationships": {"reviewSubmission": {"data": {"type": "reviewSubmissions", "id": sub["id"]}},
+                                     "appStoreVersion": {"data": {"type": "appStoreVersions", "id": ver["id"]}}}}}) is None:
+                print(f"{key}: sürüm gönderime eklenemedi (yukarıdaki hataya bakın)"); continue
+        if api("PATCH", f"/reviewSubmissions/{sub['id']}", {"data": {"type": "reviewSubmissions", "id": sub["id"],
+               "attributes": {"submitted": True}}}) is not None:
+            print(f"{key}: İNCELEMEYE GÖNDERİLDİ")
+        else:
+            print(f"{key}: gönderilemedi (yukarıdaki hataya bakın)")
+    raise SystemExit
 if secim == ["durum"]:
     # yalnızca okur: her uygulamanın sürüm durumu ve inceleme gönderimleri
     for key, app in kayit.items():
