@@ -61,13 +61,13 @@ iOS sürümü de aynı `index.html` sayfasını açar; Mac gerekmez, GitHub'ın 
 - `ios/ci/asc.py` : Apple tarafını otomatik hazırlar (paket kimliği, ortak dağıtım sertifikası, imza profili).
   Sertifika şifreli olarak bu deponun `ios-imza` dalında durur; Deprem Atlası ve Pafta da aynısını kullanır.
 
-GitHub gizli değerleri (App Store Connect › Users and Access › Integrations › App Store Connect API, rol **Admin**):
+GitHub gizli değeri (App Store Connect › Users and Access › Integrations › App Store Connect API, rol **Admin**):
 
 | Ad | Ne |
 |---|---|
-| `ASC_KEY_ID` | API anahtarının Key ID'si |
-| `ASC_ISSUER_ID` | Issuer ID |
 | `ASC_KEY_P8` | İndirilen `.p8` dosyasının tüm içeriği |
+
+Key ID ve Issuer ID gizli değildir, iş akışında yazılıdır. Anahtar değişirse `ASC_KEY_ID` ve `ASC_ISSUER_ID` adıyla gizli değer girmek yeterli, iş akışındakilerin yerine geçer.
 
 İlk derlemeden sonra App Store Connect › Uygulamalar › **+** › Yeni Uygulama ile `com.egemen.jalon` paket kimliğini seçip uygulama kaydını oluşturun, derlemeyi yeniden çalıştırın; derleme TestFlight'a yüklenir.
 
