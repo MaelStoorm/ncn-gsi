@@ -259,6 +259,19 @@ def inceleme(ver_id):
 
 secim = os.environ.get("UYGULAMALAR", "hepsi").split()
 kayit = json.loads((KOK / "magaza.json").read_text(encoding="utf-8"))
+if secim == ["durum"]:
+    # yalnızca okur: her uygulamanın sürüm durumu ve inceleme gönderimleri
+    for key, app in kayit.items():
+        a = tek(f"/apps?filter[bundleId]={app['bundle']}&limit=1")
+        if not a:
+            print(f"{key}: kayıt yok")
+            continue
+        vers = (api("GET", f"/apps/{a['id']}/appStoreVersions?filter[platform]=IOS&limit=3") or {}).get("data", [])
+        sv = ", ".join(f"{v['attributes']['versionString']}={v['attributes']['appStoreState']}" for v in vers) or "sürüm yok"
+        subs = (api("GET", f"/reviewSubmissions?filter[app]={a['id']}&limit=5", quiet=True) or {}).get("data", [])
+        ss = ", ".join(f"{x['attributes'].get('state')}@{(x['attributes'].get('submittedDate') or '')[:16]}" for x in subs) or "gönderim yok"
+        print(f"{key}: {sv} | inceleme: {ss}")
+    raise SystemExit
 for key, app in kayit.items():
     if secim != ["hepsi"] and key not in secim:
         continue
