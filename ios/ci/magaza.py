@@ -10,6 +10,7 @@ Gerekenler: ASC_KEY_ID, ASC_ISSUER_ID, ASC_KEY_P8, UYGULAMALAR (boşlukla ayrıl
 import base64
 import hashlib
 import json
+import re
 import os
 import time
 import urllib.error
@@ -96,24 +97,48 @@ def bilgi_yerel(app, info_id):
         print("  alt başlık ve gizlilik adresi")
 
 
+METIN_ALANLAR = {"alcoholTobaccoOrDrugUseOrReferences", "contests", "gamblingSimulated", "gunsOrOtherWeapons",
+                 "medicalOrTreatmentInformation", "profanityOrCrudeHumor", "sexualContentGraphicAndNudity",
+                 "sexualContentOrNudity", "horrorOrFearThemes", "matureOrSuggestiveThemes", "violenceCartoonOrFantasy",
+                 "violenceRealisticProlongedGraphicOrSadistic", "violenceRealistic"}
+
+
 def yas(info_id):
     dec = (api("GET", f"/appInfos/{info_id}/ageRatingDeclaration") or {}).get("data")
     if not dec:
         return
     did = dec["id"]
-    atla = ("kidsAgeBand", "ageRatingOverride", "ageRatingOverrideV2", "koreaAgeRatingOverride", "developerAgeRatingInfoUrl")
-    olmadi = []
-    for k, v in dec["attributes"].items():
-        if k in atla:
-            continue
-        # alanın tipi belli değilse önce metin ("NONE"), olmazsa evet/hayır (false) dene
-        denemeler = ["NONE"] if isinstance(v, str) else [False] if isinstance(v, bool) else ["NONE", False]
-        if not any(api("PATCH", f"/ageRatingDeclarations/{did}", {"data": {"type": "ageRatingDeclarations", "id": did,
-                       "attributes": {k: d}}}, quiet=True) is not None for d in denemeler):
-            olmadi.append(k)
-    son = (api("GET", f"/ageRatingDeclarations/{did}") or {}).get("data", {}).get("attributes", {})
-    bos = [k for k, v in son.items() if v is None and k not in atla]
-    print("  yaş derecelendirmesi: hepsi yok" + (f" | girilemeyen: {olmadi}" if olmadi else "") + (f" | boş kalan: {bos}" if bos else ""))
+    atla = {"kidsAgeBand", "ageRatingOverride", "ageRatingOverrideV2", "koreaAgeRatingOverride",
+            "developerAgeRatingInfoUrl", "gracRatingClassificationNumber"}
+    attrs = {k: ("NONE" if k in METIN_ALANLAR or isinstance(v, str) else False)
+             for k, v in dec["attributes"].items() if k not in atla}
+    for _ in range(8):
+        body = json.dumps({"data": {"type": "ageRatingDeclarations", "id": did, "attributes": attrs}}).encode()
+        req = urllib.request.Request(f"{API}/v1/ageRatingDeclarations/{did}", method="PATCH", data=body,
+                                     headers={"Authorization": f"Bearer {token()}", "Content-Type": "application/json"})
+        try:
+            urllib.request.urlopen(req).read()
+            print("  yaş derecelendirmesi: hepsi yok")
+            return
+        except urllib.error.HTTPError as e:
+            errs = json.loads(e.read().decode(errors="replace")).get("errors", [])
+        degisti = False
+        for x in errs:
+            m = re.search(r"attribute '(\w+)'", x.get("detail", ""))
+            if not m or m.group(1) not in attrs:
+                continue
+            k, d = m.group(1), x.get("detail", "")
+            if "Expected a BOOLEAN" in d:
+                attrs[k] = False; degisti = True
+            elif "Expected a STRING" in d or "Expected one of" in d:
+                if attrs[k] != "NONE":
+                    attrs[k] = "NONE"; degisti = True
+            else:
+                attrs.pop(k); degisti = True
+        if not degisti:
+            print("  ! yaş derecelendirmesi:", " | ".join(f"{x.get('title')}: {x.get('detail')}" for x in errs)[:800])
+            return
+    print("  ! yaş derecelendirmesi girilemedi")
 
 
 def surum_yerel(app, ver_id):
