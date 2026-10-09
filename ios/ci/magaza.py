@@ -61,10 +61,10 @@ def api(method, path, data=None, quiet=False):
         if not quiet:
             try:
                 errs = json.loads(detail).get("errors", [])
-                detail = " | ".join(f"{x.get('title')}: {x.get('detail')}" for x in errs) or detail
+                detail = " | ".join(f"{x.get('title')}: {x.get('detail')} {json.dumps(x.get('meta', {}), ensure_ascii=False)}" for x in errs) or detail
             except Exception:
                 pass
-            print(f"  ! {method} {url.replace(API, '')} -> {e.code} {detail[:500]}")
+            print(f"  ! {method} {url.replace(API, '')} -> {e.code} {detail[:3000]}")
         return None
 
 
