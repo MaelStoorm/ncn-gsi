@@ -100,23 +100,20 @@ def yas(info_id):
     dec = (api("GET", f"/appInfos/{info_id}/ageRatingDeclaration") or {}).get("data")
     if not dec:
         return
-    attrs = {}
+    did = dec["id"]
+    atla = ("kidsAgeBand", "ageRatingOverride", "ageRatingOverrideV2", "koreaAgeRatingOverride", "developerAgeRatingInfoUrl")
+    olmadi = []
     for k, v in dec["attributes"].items():
-        if k in ("kidsAgeBand", "ageRatingOverride", "ageRatingOverrideV2", "koreaAgeRatingOverride", "developerAgeRatingInfoUrl"):
+        if k in atla:
             continue
-        if isinstance(v, bool) or k in ("gambling", "unrestrictedWebAccess", "lootBox", "messagingAndChat", "parentalControls",
-                                        "ageAssurance", "userGeneratedContent", "advertising", "healthOrWellnessTopics",
-                                        "seventeenPlus", "gunsOrOtherWeapons"):
-            attrs[k] = False if not isinstance(v, str) else "NONE"
-        elif isinstance(v, str) or v is None:
-            attrs[k] = "NONE"
-    if api("PATCH", f"/ageRatingDeclarations/{dec['id']}", {"data": {"type": "ageRatingDeclarations", "id": dec["id"], "attributes": attrs}}):
-        print("  yaş derecelendirmesi: hepsi yok (4+)")
-    else:
-        # alan alan dene: hangisi kabul edilmezse atla
-        for k, v in attrs.items():
-            api("PATCH", f"/ageRatingDeclarations/{dec['id']}", {"data": {"type": "ageRatingDeclarations", "id": dec["id"], "attributes": {k: v}}}, quiet=True)
-        print("  yaş derecelendirmesi alan alan girildi (App Store Connect'te kontrol edin)")
+        # alanın tipi belli değilse önce metin ("NONE"), olmazsa evet/hayır (false) dene
+        denemeler = ["NONE"] if isinstance(v, str) else [False] if isinstance(v, bool) else ["NONE", False]
+        if not any(api("PATCH", f"/ageRatingDeclarations/{did}", {"data": {"type": "ageRatingDeclarations", "id": did,
+                       "attributes": {k: d}}}, quiet=True) is not None for d in denemeler):
+            olmadi.append(k)
+    son = (api("GET", f"/ageRatingDeclarations/{did}") or {}).get("data", {}).get("attributes", {})
+    bos = [k for k, v in son.items() if v is None and k not in atla]
+    print("  yaş derecelendirmesi: hepsi yok" + (f" | girilemeyen: {olmadi}" if olmadi else "") + (f" | boş kalan: {bos}" if bos else ""))
 
 
 def surum_yerel(app, ver_id):
@@ -178,7 +175,7 @@ def derleme(app_id, ver_id):
     if not b:
         print("  ! geçerli derleme yok (TestFlight'ta işleniyor olabilir)")
         return
-    if api("PATCH", f"/appStoreVersions/{ver_id}/relationships/build", {"data": {"type": "builds", "id": b["id"]}}):
+    if api("PATCH", f"/appStoreVersions/{ver_id}/relationships/build", {"data": {"type": "builds", "id": b["id"]}}) is not None:
         print("  derleme seçildi:", b["attributes"]["version"])
 
 
