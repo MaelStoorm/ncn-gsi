@@ -1,0 +1,67 @@
+# Jalon iOS projesi. Xcode projesi bu dosyadan XcodeGen ile üretilir (GitHub Actions'ta).
+# Uygulamanın kendisi Android'deki ile aynı sayfa: app/src/main/assets/index.html
+name: Jalon
+options:
+  bundleIdPrefix: com.egemen
+  deploymentTarget:
+    iOS: "15.0"
+settings:
+  base:
+    MARKETING_VERSION: "1.0.0"
+    CURRENT_PROJECT_VERSION: "1"
+    SWIFT_VERSION: "5.0"
+targets:
+  Jalon:
+    type: application
+    platform: iOS
+    sources:
+      - path: Jalon
+      - path: ../app/src/main/assets/index.html
+        buildPhase: resources
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.egemen.jalon
+        PRODUCT_NAME: Jalon
+        TARGETED_DEVICE_FAMILY: "1"
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        GENERATE_INFOPLIST_FILE: NO
+        INFOPLIST_FILE: Jalon/Info.plist
+        ENABLE_BITCODE: NO
+    info:
+      path: Jalon/Info.plist
+      properties:
+        CFBundleDisplayName: Jalon
+        CFBundleShortVersionString: $(MARKETING_VERSION)
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
+        CFBundleDevelopmentRegion: tr
+        LSRequiresIPhoneOS: true
+        ITSAppUsesNonExemptEncryption: false
+        UIStatusBarStyle: UIStatusBarStyleLightContent
+        UIViewControllerBasedStatusBarAppearance: true
+        UISupportedInterfaceOrientations: [UIInterfaceOrientationPortrait, UIInterfaceOrientationLandscapeLeft, UIInterfaceOrientationLandscapeRight]
+        UILaunchScreen:
+          UIColorName: LaunchBg
+        UIApplicationSceneManifest:
+          UIApplicationSupportsMultipleScenes: false
+          UISceneConfigurations:
+            UIWindowSceneSessionRoleApplication:
+              - UISceneConfigurationName: Default
+                UISceneDelegateClassName: $(PRODUCT_MODULE_NAME).SceneDelegate
+        # Dosyalar uygulamasındaki "Birlikte aç / Paylaş" ile GSI ve NCN dosyaları Jalon'a gelebilsin
+        LSSupportsOpeningDocumentsInPlace: false
+        UTImportedTypeDeclarations:
+          - UTTypeIdentifier: com.leica.gsi
+            UTTypeDescription: Leica GSI
+            UTTypeConformsTo: [public.plain-text]
+            UTTypeTagSpecification:
+              public.filename-extension: [gsi, GSI]
+          - UTTypeIdentifier: com.netcad.ncn
+            UTTypeDescription: Netcad NCN
+            UTTypeConformsTo: [public.plain-text]
+            UTTypeTagSpecification:
+              public.filename-extension: [ncn, NCN]
+        CFBundleDocumentTypes:
+          - CFBundleTypeName: Nokta dosyası
+            CFBundleTypeRole: Viewer
+            LSHandlerRank: Alternate
+            LSItemContentTypes: [com.leica.gsi, com.netcad.ncn, public.plain-text, public.comma-separated-values-text]

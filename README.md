@@ -52,6 +52,25 @@ AdMob değerleri girilmezse sürüm derlemesi de Google'ın **test** reklamları
 6. Mağaza girişi görselleri `store/` klasöründe: 512×512 ikon ve 1024×500 öne çıkan görsel. En az 2 telefon ekran görüntüsünü test APK'sından alın.
 7. `ncn-gsi-play-store-aab` içindeki `.aab` dosyasını *Test › Kapalı test* (sonra *Üretim*) sürümüne yükleyin. **Play Uygulama İmzalama** açık kalsın.
 
+## iOS (App Store)
+
+iOS sürümü de aynı `index.html` sayfasını açar; Mac gerekmez, GitHub'ın Mac sunucusu derler.
+
+- `ios/project.yml` : Xcode projesinin tarifi (XcodeGen). `ios/Jalon/` : Swift kodu ve ikon.
+- `.github/workflows/ios.yml` : `ios/` veya sayfa değişince çalışır; elle de *Actions › iOS derleme › Run workflow* ile başlatılır.
+- `ios/ci/asc.py` : Apple tarafını otomatik hazırlar (paket kimliği, ortak dağıtım sertifikası, imza profili).
+  Sertifika şifreli olarak bu deponun `ios-imza` dalında durur; Deprem Atlası ve Pafta da aynısını kullanır.
+
+GitHub gizli değerleri (App Store Connect › Users and Access › Integrations › App Store Connect API, rol **Admin**):
+
+| Ad | Ne |
+|---|---|
+| `ASC_KEY_ID` | API anahtarının Key ID'si |
+| `ASC_ISSUER_ID` | Issuer ID |
+| `ASC_KEY_P8` | İndirilen `.p8` dosyasının tüm içeriği |
+
+İlk derlemeden sonra App Store Connect › Uygulamalar › **+** › Yeni Uygulama ile `com.egemen.jalon` paket kimliğini seçip uygulama kaydını oluşturun, derlemeyi yeniden çalıştırın; derleme TestFlight'a yüklenir.
+
 ## Paket adı
 
 `com.egemen.jalon`. Play Store'a ilk yüklemeden sonra değiştirilemez; değiştirmek gerekirse `app/build.gradle` içindeki `namespace` ve `applicationId` satırlarını ve `java/com/egemen/ncngsi` klasörünü birlikte değiştirin.
