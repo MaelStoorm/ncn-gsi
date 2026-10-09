@@ -48,7 +48,20 @@ final class WebViewController: UIViewController, WKNavigationDelegate, WKScriptM
         // Sayfa güvenli alan boşluklarını kendisi veriyor (viewport-fit=cover + env(safe-area-inset-*))
         web.scrollView.contentInsetAdjustmentBehavior = .never
         web.allowsLinkPreview = false
-        view = web
+        web.translatesAutoresizingMaskIntoConstraints = false
+
+        // Sayfa saat/pil şeridinin altından başlar (kaydırınca içerik o şeridin arkasından geçmesin);
+        // şerit Android'deki gibi düz koyu renkte kalır. Alt kenar tam ekran: sayfa alt boşluğunu kendisi verir.
+        let root = UIView()
+        root.backgroundColor = Self.background
+        root.addSubview(web)
+        NSLayoutConstraint.activate([
+            web.topAnchor.constraint(equalTo: root.safeAreaLayoutGuide.topAnchor),
+            web.leadingAnchor.constraint(equalTo: root.leadingAnchor),
+            web.trailingAnchor.constraint(equalTo: root.trailingAnchor),
+            web.bottomAnchor.constraint(equalTo: root.bottomAnchor),
+        ])
+        view = root
     }
 
     override func viewDidLoad() {
