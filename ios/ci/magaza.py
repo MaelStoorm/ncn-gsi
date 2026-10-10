@@ -297,6 +297,29 @@ if secim and secim[0] == "gonder":
         else:
             print(f"{key}: gönderilemedi (yukarıdaki hataya bakın)")
     raise SystemExit
+if secim and secim[0] == "ek":
+    # inceleme ekini yükler: ek <anahtar> (dosya: ios/magaza/<anahtar>-inceleme.mp4)
+    key = secim[1]; app = kayit[key]
+    f = KOK / f"{key}-inceleme.mp4"; data = f.read_bytes()
+    a = tek(f"/apps?filter[bundleId]={app['bundle']}&limit=1")
+    vers = (api("GET", f"/apps/{a['id']}/appStoreVersions?filter[platform]=IOS&limit=3") or {}).get("data", [])
+    ver = next(v for v in vers if v["attributes"]["appStoreState"] in ("PREPARE_FOR_SUBMISSION", "DEVELOPER_REJECTED", "REJECTED", "METADATA_REJECTED"))
+    det = (api("GET", f"/appStoreVersions/{ver['id']}/appStoreReviewDetail") or {}).get("data")
+    for old in (api("GET", f"/appStoreReviewDetails/{det['id']}/appStoreReviewAttachments", quiet=True) or {}).get("data", []):
+        api("DELETE", f"/appStoreReviewAttachments/{old['id']}")
+    res = api("POST", "/appStoreReviewAttachments", {"data": {"type": "appStoreReviewAttachments",
+              "attributes": {"fileName": f.name, "fileSize": len(data)},
+              "relationships": {"appStoreReviewDetail": {"data": {"type": "appStoreReviewDetails", "id": det["id"]}}}}})
+    att = res["data"]
+    for op in att["attributes"]["uploadOperations"]:
+        part = data[op["offset"]:op["offset"] + op["length"]]
+        req = urllib.request.Request(op["url"], method=op["method"], data=part,
+                                     headers={h["name"]: h["value"] for h in op.get("requestHeaders", [])})
+        urllib.request.urlopen(req).read()
+    if api("PATCH", f"/appStoreReviewAttachments/{att['id']}", {"data": {"type": "appStoreReviewAttachments", "id": att["id"],
+           "attributes": {"uploaded": True, "sourceFileChecksum": hashlib.md5(data).hexdigest()}}}) is not None:
+        print(f"{key}: inceleme videosu yüklendi ({len(data)//1024} KB)")
+    raise SystemExit
 if secim and secim[0] == "notlar":
     # yalnızca inceleme notlarını ve iletişim bilgisini günceller
     for key in (secim[1:] or list(kayit)):
