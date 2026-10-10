@@ -308,8 +308,10 @@ if secim and secim[0] == "notlar":
         if ver:
             inceleme(ver["id"], app.get("review_notes", NOTLAR))
     raise SystemExit
-if secim == ["durum"]:
-    # yalnızca okur: her uygulamanın sürüm durumu ve inceleme gönderimleri
+if secim and secim[0] == "durum":
+    # yalnızca okur: her uygulamanın sürüm durumu ve inceleme gönderimleri (ek paket kimlikleri verilebilir)
+    for b in secim[1:]:
+        kayit[b] = {"bundle": b}
     for key, app in kayit.items():
         a = tek(f"/apps?filter[bundleId]={app['bundle']}&limit=1")
         if not a:
