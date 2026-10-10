@@ -275,6 +275,7 @@ if secim and secim[0] == "gonder":
         if not ver:
             print(f"{key}: gönderilecek sürüm yok ({', '.join(v['attributes']['appStoreState'] for v in vers)})")
             continue
+        derleme(a["id"], ver["id"])  # en son geçerli derlemeyi seç
         subs = (api("GET", f"/reviewSubmissions?filter[app]={a['id']}&filter[platform]=IOS&filter[state]=READY_FOR_REVIEW,UNRESOLVED_ISSUES&limit=1") or {}).get("data", [])
         if subs:
             sub = subs[0]
