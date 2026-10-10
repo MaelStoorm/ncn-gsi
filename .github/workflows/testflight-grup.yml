@@ -18,7 +18,7 @@ jobs:
       ASC_KEY_P8: ${{ secrets.ASC_KEY_P8 }}
       BUNDLE_IDS: >-
         com.egemen.jalon com.pati.kopek com.pati.kedi com.maelstorm.deprematlasi
-        io.github.maelstoorm.metroistanbul com.afiyetolsun.oyun com.maelstoorm.teyze
+        io.github.maelstoorm.metroistanbul com.afiyetolsun.oyun com.maelstoorm.teyze com.egemen.pafta
     steps:
       - uses: actions/checkout@v5
       - run: |
