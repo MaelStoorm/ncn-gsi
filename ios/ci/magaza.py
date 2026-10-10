@@ -250,9 +250,9 @@ def uygunluk(app_id):
         print(f"  ülkeler: {len(terr)} ülkede açık")
 
 
-def inceleme(ver_id):
+def inceleme(ver_id, notlar=NOTLAR):
     det = (api("GET", f"/appStoreVersions/{ver_id}/appStoreReviewDetail", quiet=True) or {}).get("data")
-    attrs = dict(ILETISIM, demoAccountRequired=False, notes=NOTLAR)
+    attrs = dict(ILETISIM, demoAccountRequired=False, notes=notlar)
     if det:
         ok = api("PATCH", f"/appStoreReviewDetails/{det['id']}", {"data": {"type": "appStoreReviewDetails", "id": det["id"], "attributes": attrs}})
     else:
@@ -295,6 +295,17 @@ if secim and secim[0] == "gonder":
             print(f"{key}: İNCELEMEYE GÖNDERİLDİ")
         else:
             print(f"{key}: gönderilemedi (yukarıdaki hataya bakın)")
+    raise SystemExit
+if secim and secim[0] == "notlar":
+    # yalnızca inceleme notlarını ve iletişim bilgisini günceller
+    for key in (secim[1:] or list(kayit)):
+        app = kayit[key]
+        a = tek(f"/apps?filter[bundleId]={app['bundle']}&limit=1")
+        vers = (api("GET", f"/apps/{a['id']}/appStoreVersions?filter[platform]=IOS&limit=3") or {}).get("data", [])
+        ver = next((v for v in vers if v["attributes"]["appStoreState"] in ("PREPARE_FOR_SUBMISSION", "DEVELOPER_REJECTED", "REJECTED", "METADATA_REJECTED")), vers[0] if vers else None)
+        print(key, ver["attributes"]["appStoreState"] if ver else "sürüm yok")
+        if ver:
+            inceleme(ver["id"], app.get("review_notes", NOTLAR))
     raise SystemExit
 if secim == ["durum"]:
     # yalnızca okur: her uygulamanın sürüm durumu ve inceleme gönderimleri
@@ -340,5 +351,5 @@ for key, app in kayit.items():
     derleme(app_id, ver["id"])
     fiyat(app_id)
     uygunluk(app_id)
-    inceleme(ver["id"])
+    inceleme(ver["id"], app.get("review_notes", NOTLAR))
 print("\nBitti. Kalan: her uygulamada App Privacy formu ve 'Add for Review'.")
