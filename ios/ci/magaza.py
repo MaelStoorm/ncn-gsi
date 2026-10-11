@@ -297,6 +297,27 @@ if secim and secim[0] == "gonder":
         else:
             print(f"{key}: gönderilemedi (yukarıdaki hataya bakın)")
     raise SystemExit
+if secim and secim[0] == "oku":
+    # yalnızca okur: inceleme bilgisi, abonelikler, uygulama içi satın almalar (oku <paket kimliği>)
+    a = tek(f"/apps?filter[bundleId]={secim[1]}&limit=1")
+    vers = (api("GET", f"/apps/{a['id']}/appStoreVersions?filter[platform]=IOS&limit=3") or {}).get("data", [])
+    for v in vers:
+        print("sürüm", v["attributes"]["versionString"], v["attributes"]["appStoreState"])
+        det = (api("GET", f"/appStoreVersions/{v['id']}/appStoreReviewDetail", quiet=True) or {}).get("data")
+        if det:
+            at = dict(det["attributes"])
+            if at.get("demoAccountPassword"):
+                at["demoAccountPassword"] = "(var, " + str(len(at["demoAccountPassword"])) + " karakter)"
+            print(json.dumps(at, ensure_ascii=False, indent=1))
+        b = (api("GET", f"/appStoreVersions/{v['id']}/build", quiet=True) or {}).get("data")
+        print("derleme", b and b["attributes"]["version"])
+    for g in (api("GET", f"/apps/{a['id']}/subscriptionGroups?include=subscriptions", quiet=True) or {}).get("data", []):
+        print("abonelik grubu", g["attributes"])
+    for inc in (api("GET", f"/apps/{a['id']}/subscriptionGroups?include=subscriptions", quiet=True) or {}).get("included", []):
+        print("  abonelik", inc["attributes"].get("name"), inc["attributes"].get("productId"), inc["attributes"].get("state"))
+    for i in (api("GET", f"/apps/{a['id']}/inAppPurchasesV2", quiet=True) or {}).get("data", []):
+        print("IAP", i["attributes"])
+    raise SystemExit
 if secim and secim[0] == "ek":
     # inceleme ekini yükler: ek <anahtar> (dosya: ios/magaza/<anahtar>-inceleme.mp4)
     key = secim[1]; app = kayit[key]
