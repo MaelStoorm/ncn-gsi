@@ -297,6 +297,14 @@ if secim and secim[0] == "gonder":
         else:
             print(f"{key}: gönderilemedi (yukarıdaki hataya bakın)")
     raise SystemExit
+if secim and secim[0] == "beta":
+    # yalnızca okur: son derlemenin Beta App Review durumu (beta <anahtar>)
+    app = kayit[secim[1]]
+    a = tek(f"/apps?filter[bundleId]={app['bundle']}&limit=1")
+    for b in (api("GET", f"/builds?filter[app]={a['id']}&sort=-uploadedDate&limit=3") or {}).get("data", []):
+        r = (api("GET", f"/builds/{b['id']}/betaAppReviewSubmission", quiet=True) or {}).get("data")
+        print("derleme", b["attributes"]["version"], "beta inceleme:", r and r["attributes"].get("betaReviewState"))
+    raise SystemExit
 if secim and secim[0] == "harici":
     # herkese açık TestFlight bağlantısı: harici grup + Beta App Review (harici <anahtar>)
     key = secim[1]; app = kayit[key]
