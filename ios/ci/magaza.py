@@ -297,6 +297,45 @@ if secim and secim[0] == "gonder":
         else:
             print(f"{key}: gönderilemedi (yukarıdaki hataya bakın)")
     raise SystemExit
+if secim and secim[0] == "harici":
+    # herkese açık TestFlight bağlantısı: harici grup + Beta App Review (harici <anahtar>)
+    key = secim[1]; app = kayit[key]
+    a = tek(f"/apps?filter[bundleId]={app['bundle']}&limit=1"); aid = a["id"]
+    aciklama = app.get("promo") or app["subtitle"]
+    locs = (api("GET", f"/apps/{aid}/betaAppLocalizations") or {}).get("data", [])
+    for loc_kod in ("tr", "en-US"):
+        attrs = {"description": aciklama, "feedbackEmail": ILETISIM["contactEmail"]}
+        l = next((x for x in locs if x["attributes"]["locale"] == loc_kod), None)
+        if l:
+            api("PATCH", f"/betaAppLocalizations/{l['id']}", {"data": {"type": "betaAppLocalizations", "id": l["id"], "attributes": attrs}})
+        else:
+            api("POST", "/betaAppLocalizations", {"data": {"type": "betaAppLocalizations", "attributes": dict(attrs, locale=loc_kod),
+                "relationships": {"app": {"data": {"type": "apps", "id": aid}}}}})
+    api("PATCH", f"/betaAppReviewDetails/{aid}", {"data": {"type": "betaAppReviewDetails", "id": aid, "attributes": dict(ILETISIM,
+        demoAccountRequired=False, notes=app.get("review_notes", NOTLAR)[:4000])}})
+    gruplar = (api("GET", f"/apps/{aid}/betaGroups") or {}).get("data", [])
+    g = next((x for x in gruplar if x["attributes"]["name"] == "Arkadaşlar"), None)
+    if not g:
+        g = api("POST", "/betaGroups", {"data": {"type": "betaGroups", "attributes": {"name": "Arkadaşlar", "publicLinkEnabled": True,
+            "publicLinkLimitEnabled": False, "feedbackEnabled": True},
+            "relationships": {"app": {"data": {"type": "apps", "id": aid}}}}})["data"]
+        print("harici grup açıldı")
+    b = tek(f"/builds?filter[app]={aid}&filter[processingState]=VALID&sort=-uploadedDate&limit=1")
+    print("derleme", b["attributes"]["version"], "şifreleme:", b["attributes"].get("usesNonExemptEncryption"))
+    if b["attributes"].get("usesNonExemptEncryption") is None:
+        api("PATCH", f"/builds/{b['id']}", {"data": {"type": "builds", "id": b["id"], "attributes": {"usesNonExemptEncryption": False}}})
+    bl = (api("GET", f"/builds/{b['id']}/betaBuildLocalizations") or {}).get("data", [])
+    if not bl:
+        api("POST", "/betaBuildLocalizations", {"data": {"type": "betaBuildLocalizations", "attributes": {"locale": "tr", "whatsNew": "Oyunu dene, hata görürsen ekran görüntüsüyle bildir."},
+            "relationships": {"build": {"data": {"type": "builds", "id": b["id"]}}}}})
+    api("POST", f"/betaGroups/{g['id']}/relationships/builds", {"data": [{"type": "builds", "id": b["id"]}]})
+    r = api("POST", "/betaAppReviewSubmissions", {"data": {"type": "betaAppReviewSubmissions",
+        "relationships": {"build": {"data": {"type": "builds", "id": b["id"]}}}}})
+    if r:
+        print("Beta App Review'a gönderildi:", r["data"]["attributes"].get("betaReviewState"))
+    g = api("GET", f"/betaGroups/{g['id']}")["data"]
+    print("bağlantı:", g["attributes"].get("publicLink"), "| açık:", g["attributes"].get("publicLinkEnabled"))
+    raise SystemExit
 if secim and secim[0] == "oku":
     # yalnızca okur: inceleme bilgisi, abonelikler, uygulama içi satın almalar (oku <paket kimliği>)
     a = tek(f"/apps?filter[bundleId]={secim[1]}&limit=1")
