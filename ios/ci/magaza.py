@@ -268,14 +268,15 @@ if secim and secim[0] == "gonder":
     # incelemeye gönder: gonder [anahtarlar...]
     hedef = secim[1:] or list(kayit)
     for key in hedef:
-        app = kayit[key]
+        app = kayit.get(key, {"bundle": key})  # magaza.json dışı uygulama: bundle kimliği, derleme değişmez
         a = tek(f"/apps?filter[bundleId]={app['bundle']}&limit=1")
         vers = (api("GET", f"/apps/{a['id']}/appStoreVersions?filter[platform]=IOS&limit=3") or {}).get("data", [])
         ver = next((v for v in vers if v["attributes"]["appStoreState"] in ("PREPARE_FOR_SUBMISSION", "DEVELOPER_REJECTED", "REJECTED")), None)
         if not ver:
             print(f"{key}: gönderilecek sürüm yok ({', '.join(v['attributes']['appStoreState'] for v in vers)})")
             continue
-        derleme(a["id"], ver["id"])  # en son geçerli derlemeyi seç
+        if key in kayit:
+            derleme(a["id"], ver["id"])  # en son geçerli derlemeyi seç
         subs = (api("GET", f"/reviewSubmissions?filter[app]={a['id']}&filter[platform]=IOS&filter[state]=READY_FOR_REVIEW,UNRESOLVED_ISSUES&limit=1") or {}).get("data", [])
         if subs:
             sub = subs[0]
