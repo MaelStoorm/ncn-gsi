@@ -436,7 +436,7 @@ function parseNCN(text){
   const pts=[],errs=[];
   text.replace(/^﻿/,'').split(/\r?\n/).forEach((raw,i)=>{
     const line=raw.trim(); if(!line||/^[#;\/]/.test(line))return;
-    const tok=line.includes(';')?line.split(';').map(t=>t.trim().replace(/^"(.*)"$/,'$1')):(line.match(/"[^"]*"|[^\s,;\t]+/g)||[]).filter(t=>!t.startsWith('"'));
+    const tok=line.includes(';')?line.split(';').map(t=>t.trim().replace(/^"(.*)"$/,'$1')):((m=>m.length>=3?m:(line.match(/"[^"]*"|[^\s,;\t]+/g)||[]))((line.match(/"[^"]*"|[^\s;\t]+/g)||[]))).filter(t=>!t.startsWith('"'));
     const y=numTok(tok[1]),x=numTok(tok[2]); let z=numTok(tok[3]);
     if(!pts.length&&!errs.length&&/[A-Za-zÇĞİÖŞÜçğıöşü]/.test(tok[1]||'')&&!isFinite(y))return; // başlık satırı
     if(!tok[0]||!isFinite(y)||!isFinite(x)){errs.push(i+1);return;}
