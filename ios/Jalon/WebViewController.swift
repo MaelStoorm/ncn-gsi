@@ -48,6 +48,11 @@ final class WebViewController: UIViewController, WKNavigationDelegate, WKScriptM
         // Sayfa güvenli alan boşluklarını kendisi veriyor (viewport-fit=cover + env(safe-area-inset-*))
         web.scrollView.contentInsetAdjustmentBehavior = .never
         web.allowsLinkPreview = false
+        // Sayfanın kendisi iki parmakla büyümesin (plan kendi yakınlaştırmasını yapar)
+        web.scrollView.pinchGestureRecognizer?.isEnabled = false
+        web.scrollView.minimumZoomScale = 1
+        web.scrollView.maximumZoomScale = 1
+        web.scrollView.bouncesZoom = false
         web.translatesAutoresizingMaskIntoConstraints = false
 
         // Sayfa saat/pil şeridinin altından başlar (kaydırınca içerik o şeridin arkasından geçmesin);
@@ -73,6 +78,7 @@ final class WebViewController: UIViewController, WKNavigationDelegate, WKScriptM
     // MARK: - Sayfa yüklendi / dış bağlantılar
 
     func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
+        webView.scrollView.pinchGestureRecognizer?.isEnabled = false
         pageReady = true
         flushPendingFiles()
     }
