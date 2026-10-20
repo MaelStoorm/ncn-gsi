@@ -428,7 +428,8 @@ function parseNCN(text){
   const pts=[],errs=[];
   text.replace(/^﻿/,'').split(/\r?\n/).forEach((raw,i)=>{
     const line=raw.trim(); if(!line||/^[#;\/]/.test(line))return;
-    const tok=(line.match(/"[^"]*"|[^\s,;\t]+/g)||[]).filter(t=>!t.startsWith('"'));
+    let tok=(line.match(/"[^"]*"|[^\s;\t]+/g)||[]).filter(t=>!t.startsWith('"'));
+    if(tok.length<3)tok=(line.match(/"[^"]*"|[^\s,;\t]+/g)||[]).filter(t=>!t.startsWith('"'));
     const y=numTok(tok[1]),x=numTok(tok[2]); let z=numTok(tok[3]);
     if(!tok[0]||!isFinite(y)||!isFinite(x)){errs.push(i+1);return;}
     pts.push({n:tok[0],y,x,z:isFinite(z)?z:null});
