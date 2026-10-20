@@ -607,11 +607,11 @@ function draw(all){
   for(let v=Math.ceil(wx0/step)*step;v<=wx1;v+=step){const y=toS(0,v)[1];c.beginPath();c.moveTo(0,y);c.lineTo(box.width,y);c.stroke();}
   // points
   const label=showLbl && (pts.length<=150 || view.k>=3);
-  c.font='600 12px '+tok('--f-mono'); c.lineJoin='round';
+  c.font='700 14px '+tok('--f-mono'); c.lineJoin='round';
   pts.forEach(p=>{const [x,y]=toS(p.y,p.x); drawn.push({p,x,y});
     if(x<-20||y<-20||x>box.width+20||y>box.height+20)return;
-    c.fillStyle=color(p.fi);c.beginPath();c.arc(x,y,view.k>4?4:3,0,Math.PI*2);c.fill();
-    if(label){c.lineWidth=3;c.strokeStyle=tok('--bg');c.strokeText(p.n,x+6,y-5);c.fillStyle=tok('--ink');c.fillText(p.n,x+6,y-5);}});
+    c.fillStyle=color(p.fi);c.beginPath();c.arc(x,y,view.k>4?6:5,0,Math.PI*2);c.fill();c.lineWidth=1.5;c.strokeStyle=tok('--bg');c.stroke();
+    if(label){c.lineWidth=4;c.strokeStyle=tok('--bg');c.strokeText(p.n,x+8,y-7);c.fillStyle=tok('--ink');c.fillText(p.n,x+8,y-7);}});
   if(sel){const d=drawn.find(d=>d.p.n===sel.n&&d.p.fi===sel.fi);
     if(d&&d.x>=0&&d.y>=0&&d.x<=box.width&&d.y<=box.height){c.strokeStyle=tok('--ink');c.lineWidth=2;c.beginPath();c.arc(d.x,d.y,8,0,Math.PI*2);c.stroke();showTip(d);} else $('tip').hidden=true;}
   else $('tip').hidden=true;
