@@ -402,8 +402,15 @@ if secim and secim[0] == "notlar":
     raise SystemExit
 if secim and secim[0] == "durum":
     # yalnızca okur: her uygulamanın sürüm durumu ve inceleme gönderimleri (ek paket kimlikleri verilebilir)
+    if "hepsi" in secim[1:]:  # hesaptaki tüm uygulamalar
+        bilinen = {x["bundle"] for x in kayit.values()}
+        for x in (api("GET", "/apps?limit=50") or {}).get("data", []):
+            b = x["attributes"]["bundleId"]
+            if b not in bilinen:
+                secim.append(b)
     for b in secim[1:]:
-        kayit[b] = {"bundle": b}
+        if b != "hepsi":
+            kayit[b] = {"bundle": b}
     for key, app in kayit.items():
         a = tek(f"/apps?filter[bundleId]={app['bundle']}&limit=1")
         if not a:
