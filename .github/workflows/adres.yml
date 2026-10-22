@@ -5,6 +5,9 @@ name: App Store destek adreslerini güncelle
 on:
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 jobs:
   adres:
     runs-on: ubuntu-latest
@@ -16,4 +19,11 @@ jobs:
       - uses: actions/checkout@v5
       - run: |
           pip install -q cryptography
-          python3 -u ios/ci/adres.py
+          python3 -u ios/ci/adres.py 2>&1 | tee "$RUNNER_TEMP/adres.txt"
+      - name: Sonucu ios-kayit dalına yaz
+        if: always()
+        run: |
+          cd "$RUNNER_TEMP" && mkdir k && cp adres.txt k/ && cd k
+          git init -q -b ios-kayit && git add -A
+          git -c user.name=github-actions -c user.email=github-actions@users.noreply.github.com commit -qm "Adres güncelleme kaydı"
+          git push -qf "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" ios-kayit
