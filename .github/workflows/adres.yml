@@ -1,0 +1,19 @@
+name: App Store destek adreslerini güncelle
+
+# Yalnızca destek ve tanıtım adreslerini ios/magaza/magaza.json'dakilerle değiştirir. Elle çalıştırılır.
+
+on:
+  workflow_dispatch:
+
+jobs:
+  adres:
+    runs-on: ubuntu-latest
+    env:
+      ASC_KEY_ID: ${{ secrets.ASC_KEY_ID || '9T56U9RA2U' }}
+      ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID || 'b5342a93-c449-4f20-bb30-9d03e0767ad6' }}
+      ASC_KEY_P8: ${{ secrets.ASC_KEY_P8 }}
+    steps:
+      - uses: actions/checkout@v5
+      - run: |
+          pip install -q cryptography
+          python3 -u ios/ci/adres.py
