@@ -60,6 +60,8 @@ def api(method, path, data=None, quiet=False):
 KOK = Path(__file__).resolve().parent.parent / "magaza"
 DUZENLENIR = {"PREPARE_FOR_SUBMISSION", "DEVELOPER_REJECTED", "REJECTED", "METADATA_REJECTED"}
 apps = json.loads((KOK / "magaza.json").read_text())
+# Bu listede olmayan, kendi deposundan yönetilen uygulamalar
+apps["vitray"] = {"bundle": "com.vitrayatolyesi.oyun", "support": "https://maelstoorm.github.io/destek.html", "marketing": "https://maelstoorm.github.io/vitray-atolyesi/"}
 for key, app in apps.items():
     if not isinstance(app, dict) or not app.get("bundle"):
         continue
