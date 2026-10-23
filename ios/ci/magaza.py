@@ -88,6 +88,8 @@ def bilgi_yerel(app, info_id):
     loc = next((l for l in (api("GET", f"/appInfos/{info_id}/appInfoLocalizations") or {}).get("data", [])
                 if l["attributes"]["locale"].startswith(LOCALE)), None)
     attrs = {"subtitle": app["subtitle"], "privacyPolicyUrl": app["privacy"]}
+    if app.get("name"):
+        attrs["name"] = app["name"]
     if loc:
         ok = api("PATCH", f"/appInfoLocalizations/{loc['id']}", {"data": {"type": "appInfoLocalizations", "id": loc["id"], "attributes": attrs}})
     else:
