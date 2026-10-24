@@ -300,6 +300,17 @@ if secim and secim[0] == "gonder":
         else:
             print(f"{key}: gönderilemedi (yukarıdaki hataya bakın)")
     raise SystemExit
+if secim and secim[0] == "geri":
+    # incelemeden geri çek: geri <anahtar|bundle> (bekleyen gönderimi iptal eder)
+    app = kayit.get(secim[1], {"bundle": secim[1]})
+    a = tek(f"/apps?filter[bundleId]={app['bundle']}&limit=1")
+    subs = (api("GET", f"/reviewSubmissions?filter[app]={a['id']}&filter[state]=WAITING_FOR_REVIEW,IN_REVIEW&limit=5") or {}).get("data", [])
+    if not subs:
+        print(f"{secim[1]}: bekleyen gönderim yok")
+    for s in subs:
+        ok = api("PATCH", f"/reviewSubmissions/{s['id']}", {"data": {"type": "reviewSubmissions", "id": s["id"], "attributes": {"canceled": True}}})
+        print(f"{secim[1]}: {s['attributes']['state']} gönderim {'GERİ ÇEKİLDİ' if ok is not None else 'geri çekilemedi'}")
+    raise SystemExit
 if secim and secim[0] == "beta":
     # yalnızca okur: son derlemenin Beta App Review durumu (beta <anahtar>)
     app = kayit[secim[1]]
