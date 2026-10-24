@@ -10,3 +10,4 @@ local.properties
 ios/*.xcodeproj/
 ios/build/
 __pycache__/
+ios/gen/

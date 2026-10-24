@@ -413,7 +413,7 @@ const $=id=>document.getElementById(id);
 const SER=['--s1','--s2','--s3','--s4','--s5','--s6'];
 const store={ncn2gsi:[],gsi2ncn:[]}; // each: {id,name,text,example}
 let mode='ncn2gsi', seq=0, dl=null;
-const AB=window.AndroidBridge||null; // present inside the Android app
+const AB=window.AppBridge/*android:start*/||window.AndroidBridge/*android:end*/||null; // uygulamanın içinde tanımlı
 
 const TXT={
   ncn2gsi:{h:'NCN <span class="arr">→</span> GSI',sub:'Bir veya daha fazla NCN dosyasını birleştirip Leica GSI olarak kaydeder.',
@@ -518,7 +518,7 @@ async function readFiles(list){
   }
   view={k:1,tx:0,ty:0};sel=null;render();
 }
-// Called by the Android app after the system file picker returns
+// Uygulama, dosya seçicisinden dönünce çağırır
 window.__addFileFromApp=function(name,text){clearExamples();addFile(name,text);render();};
 
 function opts(){

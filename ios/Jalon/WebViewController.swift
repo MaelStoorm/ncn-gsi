@@ -2,9 +2,8 @@
  * Jalon — NCN ⇄ GSI Dönüştürücü (iOS)
  * Telif Hakkı (c) 2026 Egemen Çalıkoğlu. Tüm hakları saklıdır.
  *
- * Android'deki ile aynı sayfayı (index.html) açar. Sayfa, Android'de window.AndroidBridge
- * üzerinden dosya seçme, kaydetme ve kopyalama yapıyor; iOS'ta aynı adla bir köprü tanımlanır,
- * böylece sayfanın kendisi değişmeden iki platformda da çalışır.
+ * Uygulamanın sayfasını (index.html) açar ve sayfanın dosya seçme, kaydetme ve kopyalama için
+ * kullandığı window.AppBridge köprüsünü tanımlar. Başka bir telefon özelliği kullanılmaz.
  */
 import UIKit
 import WebKit
@@ -20,9 +19,9 @@ final class WebViewController: UIViewController, WKNavigationDelegate, WKScriptM
     private var exportFile: URL?
     private var exportName = ""
 
-    // Sayfadaki window.AndroidBridge çağrılarını iOS'a yönlendirir
+    // Sayfadaki window.AppBridge çağrıları (dosya seç, kaydet, kopyala)
     private static let bridgeScript = """
-    window.AndroidBridge = {
+    window.AppBridge = {
       pickFiles: function () { window.webkit.messageHandlers.jalon.postMessage({ op: 'pick' }); },
       saveFile: function (name, data) { window.webkit.messageHandlers.jalon.postMessage({ op: 'save', name: String(name), data: String(data) }); },
       copy: function (text) { window.webkit.messageHandlers.jalon.postMessage({ op: 'copy', text: String(text) }); }
@@ -56,7 +55,7 @@ final class WebViewController: UIViewController, WKNavigationDelegate, WKScriptM
         web.translatesAutoresizingMaskIntoConstraints = false
 
         // Sayfa saat/pil şeridinin altından başlar (kaydırınca içerik o şeridin arkasından geçmesin);
-        // şerit Android'deki gibi düz koyu renkte kalır. Alt kenar tam ekran: sayfa alt boşluğunu kendisi verir.
+        // şerit düz koyu renkte kalır. Alt kenar tam ekran: sayfa alt boşluğunu kendisi verir.
         let root = UIView()
         root.backgroundColor = Self.background
         root.addSubview(web)

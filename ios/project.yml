@@ -1,5 +1,5 @@
 # Jalon iOS projesi. Xcode projesi bu dosyadan XcodeGen ile üretilir (GitHub Actions'ta).
-# Uygulamanın kendisi Android'deki ile aynı sayfa: app/src/main/assets/index.html
+# Uygulamanın kendisi app/src/main/assets/index.html sayfası; ios/hazirla.sh iOS kopyasını ios/gen/Jalon/site'a hazırlar.
 name: Jalon
 options:
   bundleIdPrefix: com.egemen
@@ -16,7 +16,7 @@ targets:
     platform: iOS
     sources:
       - path: Jalon
-      - path: ../app/src/main/assets/index.html
+      - path: gen/Jalon/site/index.html
         buildPhase: resources
     settings:
       base:

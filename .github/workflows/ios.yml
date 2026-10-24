@@ -34,8 +34,9 @@ jobs:
           sudo xcode-select -s "$X/Contents/Developer"
           xcodebuild -version
 
-      - name: Xcode projesini üret
+      - name: Sayfayı hazırla, denetle ve Xcode projesini üret
         run: |
+          ios/hazirla.sh
           brew install xcodegen >/dev/null
           cd ios && xcodegen generate
 
